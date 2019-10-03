@@ -1,0 +1,23 @@
+{
+  "name": "aui_melody_project",
+  "version": "1.0.0",
+  "description": "Project for the Advanced User Interface in Politecnico di Milano. The web app's aim is to provide an experience to the user, who can create a simple melody with his/her voice.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/delucagiorgio/AUI_Melody_project.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/delucagiorgio/AUI_Melody_project/issues"
+  },
+  "homepage": "https://github.com/delucagiorgio/AUI_Melody_project#readme",
+  "scripts": {
+    "lite": "lite-server --port 10001",
+    "start": "npm run lite"
+  },
+  "devDependencies": {
+    "lite-server": "^1.3.1"
+  }
+}
