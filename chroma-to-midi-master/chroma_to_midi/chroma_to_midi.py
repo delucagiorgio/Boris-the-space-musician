@@ -1,58 +1,37 @@
 """
 create a chromagram from an audio file and then render that chromagram to MIDI
 """ 
-
-import madmom
 import numpy as np
-import scipy
-import scipy.signal
 import pretty_midi
 import librosa as lb
+import librosa.core as core
+import matplotlib.pyplot as plt 
+import scipy.signal as filt
 
 from sys import argv, maxsize
 from os.path import exists
 
-# Run the script from the command line
-script, path_to_audio, path_to_midi, tempo_var = argv
-np.set_printoptions(threshold=maxsize)
+# VARIABILI GLOBALI PER IL CONTROLLO DELLE PRINCIPALI IMPOSTAZIONI DI PITCH TRACKING E CREAZIONE DELLE NOTE MIDI
+TIME_THRESHOLD_NOTE_CREATION=0.07
+WINDOW_MEDIAN_LENGTH=11
+THRESHOLD_MAGNITUDE =5
 
-y, sr = lb.load(path=path_to_audio, sr=44100, mono=True)
-# duration
-D = lb.get_duration(y=y, sr=sr)
+# Crea una note midi aggiungendola alla traccia passata come parametro; la nota è effettivamente inserita se rispetta la soglia di lunghezza imposta dalla variabile globale
+def create_note(new_note, start_time, end_time, piano):
+	if end_time - start_time > TIME_THRESHOLD_NOTE_CREATION:
+		note = pretty_midi.Note(velocity=127, pitch=(new_note), start=start_time, end=end_time)
+		piano.notes.append(note)
 
-# spectogram
-S = np.abs(lb.stft(y))
-chroma = lb.feature.chroma_stft(S=S, sr=sr)
-# nframe
-nframe = len(chroma[0])
+# Splitta un array x seconda la condizione x<5, ad esempio
+def split(arr, cond):
+  return [arr[cond], arr[~cond]]
 
-# Function to threshhold the chroma array to only the top 3 strongest pitch classes. 
-def threshhold_chroma_lib(chromagram):
-	# Create an array of zeros the same size/dimension as the chromagram
-	chromagram_out = np.zeros((len(chromagram[0]), len(chromagram)))
-	# Loop through the chroma_vector the size of the zeros array and sort for the strongest pitch centers 
-	for frame, note_vector in enumerate(chromagram_out):
-		best_note = 0
-		best_value = 0
-		for note, frame_vector in enumerate(chromagram):
-			if(frame_vector[frame] > best_value): 
-				best_value = frame_vector[frame]
-				best_note = note
-   
-		chromagram_out[frame][best_note] = 10
-   
-	return chromagram_out
+# restituisce la nota MIDI (int) corrispondente alla stima del pitch, quantizzato sulla note più vicina tramite la funzione hz_to_note
+def get_note(note_freq):
+	return core.note_to_midi(core.hz_to_note(note_freq))
 
-# Call the threshholding function
-chroma_out = threshhold_chroma_lib(chroma)
-
-# Function to create our MIDI file based on the above sorted chroma array
-def get_note(note_vector):
-	for note_index, note in enumerate(note_vector):
-		if note == 10:
-			return note_index
-
-def chroma_to_midi(chromagram):
+# Trasforma i pitch in note MIDI
+def pitches_to_midi(pitch_array):
 	chroma_midi = pretty_midi.PrettyMIDI(initial_tempo=int(tempo_var))
 	piano_program = pretty_midi.instrument_name_to_program('Acoustic Grand Piano')
 	piano = pretty_midi.Instrument(program=piano_program)
@@ -60,53 +39,125 @@ def chroma_to_midi(chromagram):
 	start=0.0
 	end=0.0
 	vi = 0
-	last_vector = []
 	last_note = 0
 	end_last_note = 0
 	start_last_note = 0
 	still_evaluating = 0
-	# Loop through the chroma vectors of the array by their vector_index
-	for vector_index, chroma_vector in enumerate(chromagram):
-		# Everytime we loop through, increase the point in the MIDI file that we are writing by the framesize of the original chromagram
+	# per ogni frame disponibile
+	for vector_index, pitch_frame_audio in enumerate(pitch_array):
+		# aggiorno il valore dell'end
 		end += D/nframe
-		#Se è la prima nota o è cambiata la nota rispetto all'iterazione precedente, salvo l'informazione e vado avanti
 
-		if vi == 0:
-			still_evaluating = 1
-			last_note = get_note(chroma_vector)
-			start_last_note = 0
-			end_last_note = end
-			last_vector = chroma_vector
 
-			vi+=1 
-		# If the tonal centers have not changed, don't 
-		if np.array_equal(chroma_vector,last_vector):
-			still_evaluating = 1
-			end_last_note = end
-			last_vector = chroma_vector
-			pass
-		#Se è cambiata la nota, scrivo la nota precedente dall'inizio della sua esecuzione fino all'istante attuale e vado avanti
+		if pitch_frame_audio != 0:
+			#prima nota valida, salvo info riguardo la nota, lo start e la fine
+			if vi == 0:
+				still_evaluating = 1
+				last_note = get_note(pitch_frame_audio)
+				start_last_note = end
+				end_last_note = end
+				vi+=1
+
+			#Se ritrovo la stessa nota di prima o l'ultima non era una nota valida
+			elif last_note == 0 or last_note == get_note(pitch_frame_audio):
+
+				#se non era valida, assegno il nuovo valore della nota e dello start
+				if last_note == 0:
+					last_note = get_note(pitch_frame_audio)
+					start_last_note=end
+
+				#Assegno la nuova fine della nota
+				still_evaluating = 1
+				end_last_note = end
+				
+			#Se è cambiata la nota e l'attuale è valida, scrivo la nota precedente dall'inizio della sua esecuzione fino all'istante attuale e vado avanti
+			else:
+
+				still_evaluating = 0
+				create_note(last_note, start_last_note, end_last_note, piano)
+
+				last_note = get_note(pitch_frame_audio)
+				start_last_note = end_last_note
+				end_last_note = end
 		else:
+			#il pitch non è valido quindi o scrivo l'ultima nota (se diversa da 0) altrimenti aggiorno solo lo start
+			if last_note != 0:
+				still_evaluating = 0
+				create_note(last_note, start_last_note, end_last_note, piano)
 
-			vi+=1 
-			still_evaluating = 0
-			note = pretty_midi.Note(velocity=127, pitch=(last_note+60), start=start_last_note, end=end_last_note)
-			piano.notes.append(note)
-			last_note = get_note(chroma_vector)
-			start_last_note = end_last_note
-			end_last_note = end
-			last_vector = chroma_vector
+			last_note = 0
+			start_last_note = end
 
+
+	# In caso di ultima nota ancora in valutazione, la scrive
 	if still_evaluating != 0:
-		note = pretty_midi.Note(velocity=127, pitch=(last_note+60), start=start_last_note, end=end_last_note)
-		piano.notes.append(note)
+		create_note(last_note, start_last_note, end_last_note, piano)
 
-	# Add the MIDI we just made to the piano instrument   
+
+	   
 	chroma_midi.instruments.append(piano)
-	# Write the MIDI file to a filename we specified above
 	chroma_midi.write(path_to_midi)
 	return chroma_midi
 
+# Estrae le ampiezze massime in ogni frame e calcola i pitch corrispondenti
+def extract_max(pitch_array, length_pitches):
+	new_pitches = np.zeros_like(pitch_array[0])
 
-# Run the function    
-chroma_to_midi(chroma_out)
+	#Per ogni frame disponibile
+	for i in range(0, length_pitches):
+		#cerca la frequenza più alta
+		index = magnitudes[:, i].argmax()
+
+		if magnitudes[index][i] > THRESHOLD_MAGNITUDE:
+			#salva il pitch correlato
+			new_pitches[i] = pitch_array[index][i]
+		else:
+			new_pitches[i] = 0
+
+	return new_pitches
+
+# Run the script from the command line
+script, path_to_audio, path_to_midi, tempo_var = argv
+np.set_printoptions(threshold=maxsize)
+
+y, sr = lb.load(path=path_to_audio, sr=48000, mono=True)
+# durata
+D = lb.get_duration(y=y, sr=sr)
+# Spettro
+S = np.abs(lb.stft(y))
+
+#Rispettivamente gli array di pitch e ampiezze relativi ad ogni frame e suddivisi per frequenze (bins)
+pitches, magnitudes = lb.core.piptrack(S=S, sr=sr)
+
+# nframe
+nframe = len(pitches[0])
+
+#Estrae i pitch relativi alla frequenza con massima ampiezza per ogni frame
+pitch_track = extract_max(pitches, nframe)
+
+# Considero solo le frequenze diverse da zero
+pitches_no_zeros = split(pitch_track, cond=pitch_track==0)
+
+pitches_filtered = []
+final_pitches = []
+
+#Per ogni array di pitch validi
+for index in range(0, len(pitches_no_zeros)):
+	if pitches_no_zeros[index][0] == 0:
+		print("Not right one!")
+		pass
+	else:
+		#Applica il filtro mediano per smussare l'andamento del pitch
+		pitches_filtered.append(filt.medfilt(pitches_no_zeros[index], WINDOW_MEDIAN_LENGTH))
+		temp = pitches_filtered[:]
+
+		#Scorre l'array dei pitch originali, per trovare gli zero e inserirli nell'array di pitch filtrati
+		for k in range(0, len(pitch_track)):
+			if pitch_track[k] == 0:
+				#Inserisco nuovamente lo zero
+				temp[0] = list(temp[0][:k]) + [0] + list(temp[0][k:])
+		
+		final_pitches = temp[0]	
+
+# Crea il file    
+pitches_to_midi(final_pitches)
