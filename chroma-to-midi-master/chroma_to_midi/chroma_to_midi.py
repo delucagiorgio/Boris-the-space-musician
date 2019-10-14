@@ -1,15 +1,10 @@
-"""
-create a chromagram from an audio file and then render that chromagram to MIDI
-""" 
 import numpy as np
 import pretty_midi
 import librosa as lb
 import librosa.core as core
-import matplotlib.pyplot as plt 
 import scipy.signal as filt
 
 from sys import argv, maxsize
-from os.path import exists
 
 # VARIABILI GLOBALI PER IL CONTROLLO DELLE PRINCIPALI IMPOSTAZIONI DI PITCH TRACKING E CREAZIONE DELLE NOTE MIDI
 TIME_THRESHOLD_NOTE_CREATION=0.07
@@ -22,9 +17,9 @@ def create_note(new_note, start_time, end_time, piano):
 		note = pretty_midi.Note(velocity=127, pitch=(new_note), start=start_time, end=end_time)
 		piano.notes.append(note)
 
-# Splitta un array x seconda la condizione x<5, ad esempio
-def split(arr, cond):
-  return [arr[cond], arr[~cond]]
+# Splitta un array x seconda la condizione x!=0
+def split(list):
+	return [x for x in list if x != 0]
 
 # restituisce la nota MIDI (int) corrispondente alla stima del pitch, quantizzato sulla note più vicina tramite la funzione hz_to_note
 def get_note(note_freq):
@@ -35,7 +30,7 @@ def pitches_to_midi(pitch_array):
 	chroma_midi = pretty_midi.PrettyMIDI(initial_tempo=int(tempo_var))
 	piano_program = pretty_midi.instrument_name_to_program('Acoustic Grand Piano')
 	piano = pretty_midi.Instrument(program=piano_program)
-		
+
 	start=0.0
 	end=0.0
 	vi = 0
@@ -44,7 +39,7 @@ def pitches_to_midi(pitch_array):
 	start_last_note = 0
 	still_evaluating = 0
 	# per ogni frame disponibile
-	for vector_index, pitch_frame_audio in enumerate(pitch_array):
+	for _i, pitch_frame_audio in enumerate(pitch_array):
 		# aggiorno il valore dell'end
 		end += D/nframe
 
@@ -100,17 +95,17 @@ def pitches_to_midi(pitch_array):
 	return chroma_midi
 
 # Estrae le ampiezze massime in ogni frame e calcola i pitch corrispondenti
-def extract_max(pitch_array, length_pitches):
-	new_pitches = np.zeros_like(pitch_array[0])
+def extract_max(pitch_list, magnitude_list, frame_length):
+	new_pitches = np.zeros_like(pitch_list[0])
 
 	#Per ogni frame disponibile
-	for i in range(0, length_pitches):
+	for i in range(0, frame_length):
 		#cerca la frequenza più alta
-		index = magnitudes[:, i].argmax()
+		f_max = magnitude_list[:, i].argmax()
 
-		if magnitudes[index][i] > THRESHOLD_MAGNITUDE:
+		if magnitude_list[f_max][i] > THRESHOLD_MAGNITUDE:
 			#salva il pitch correlato
-			new_pitches[i] = pitch_array[index][i]
+			new_pitches[i] = pitch_list[f_max][i]
 		else:
 			new_pitches[i] = 0
 
@@ -120,44 +115,41 @@ def extract_max(pitch_array, length_pitches):
 script, path_to_audio, path_to_midi, tempo_var = argv
 np.set_printoptions(threshold=maxsize)
 
+# `y` = audio time series
+# `sr` sampling rate of `y`
 y, sr = lb.load(path=path_to_audio, sr=48000, mono=True)
-# durata
-D = lb.get_duration(y=y, sr=sr)
-# Spettro
-S = np.abs(lb.stft(y))
+
+D = lb.get_duration(y=y, sr=sr) # durata
+S = np.abs(lb.stft(lb.util.normalize(y, fill=False))) # spettrogramma normalizzato
 
 #Rispettivamente gli array di pitch e ampiezze relativi ad ogni frame e suddivisi per frequenze (bins)
-pitches, magnitudes = lb.core.piptrack(S=S, sr=sr)
-
-# nframe
-nframe = len(pitches[0])
+pitches, magnitudes = lb.core.piptrack(S=S, sr=sr, threshold=0.9, center=False)
+nframe = len(pitches[0]) # nframe
 
 #Estrae i pitch relativi alla frequenza con massima ampiezza per ogni frame
-pitch_track = extract_max(pitches, nframe)
+pitch_track = extract_max(pitch_list=pitches, magnitude_list=magnitudes, frame_length=nframe)
 
 # Considero solo le frequenze diverse da zero
-pitches_no_zeros = split(pitch_track, cond=pitch_track==0)
+pitches_no_zeros =  split(list=pitch_track)
 
 pitches_filtered = []
 final_pitches = []
 
-#Per ogni array di pitch validi
-for index in range(0, len(pitches_no_zeros)):
-	if pitches_no_zeros[index][0] == 0:
-		print("Not right one!")
-		pass
-	else:
-		#Applica il filtro mediano per smussare l'andamento del pitch
-		pitches_filtered.append(filt.medfilt(pitches_no_zeros[index], WINDOW_MEDIAN_LENGTH))
-		temp = pitches_filtered[:]
+if not pitches_no_zeros:
+	print("Not right one!")
+	pass
+else:
+	#Applica il filtro mediano per smussare l'andamento del pitch
+	pitches_filtered.append(filt.medfilt(volume=pitches_no_zeros, kernel_size=WINDOW_MEDIAN_LENGTH))
+	temp = pitches_filtered[0][:]
 
-		#Scorre l'array dei pitch originali, per trovare gli zero e inserirli nell'array di pitch filtrati
-		for k in range(0, len(pitch_track)):
-			if pitch_track[k] == 0:
-				#Inserisco nuovamente lo zero
-				temp[0] = list(temp[0][:k]) + [0] + list(temp[0][k:])
-		
-		final_pitches = temp[0]	
+	#Scorre l'array dei pitch originali, per trovare gli zero e inserirli nell'array di pitch filtrati
+	for k, pitch_ in enumerate(pitch_track):
+		if pitch_ == 0:
+			#Inserisco nuovamente lo zero
+			temp = list(temp[:k]) + [0] + list(temp[k:])
+
+	final_pitches = temp
 
 # Crea il file    
 pitches_to_midi(final_pitches)
