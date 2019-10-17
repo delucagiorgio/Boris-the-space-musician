@@ -7,9 +7,9 @@ import scipy.signal as filt
 from sys import argv, maxsize
 
 # VARIABILI GLOBALI PER IL CONTROLLO DELLE PRINCIPALI IMPOSTAZIONI DI PITCH TRACKING E CREAZIONE DELLE NOTE MIDI
-TIME_THRESHOLD_NOTE_CREATION=0.07
-WINDOW_MEDIAN_LENGTH=11
-THRESHOLD_MAGNITUDE =5
+TIME_THRESHOLD_NOTE_CREATION=0.00
+WINDOW_MEDIAN_LENGTH=31
+THRESHOLD_MAGNITUDE =3
 
 # Crea una note midi aggiungendola alla traccia passata come parametro; la nota è effettivamente inserita se rispetta la soglia di lunghezza imposta dalla variabile globale
 def create_note(new_note, start_time, end_time, piano):
@@ -31,7 +31,6 @@ def pitches_to_midi(pitch_array):
 	piano_program = pretty_midi.instrument_name_to_program('Acoustic Grand Piano')
 	piano = pretty_midi.Instrument(program=piano_program)
 
-	start=0.0
 	end=0.0
 	vi = 0
 	last_note = 0
@@ -68,14 +67,23 @@ def pitches_to_midi(pitch_array):
 			#Se è cambiata la nota e l'attuale è valida, scrivo la nota precedente dall'inizio della sua esecuzione fino all'istante attuale e vado avanti
 			else:
 
-				still_evaluating = 0
-				create_note(last_note, start_last_note, end_last_note, piano)
+				if abs(core.midi_to_hz(last_note) - pitch_frame_audio[_i-1]) <= 8 :
+					#Assegno la nuova fine della nota
+					still_evaluating = 1
+					end_last_note = end
+				else:
 
-				last_note = get_note(pitch_frame_audio)
-				start_last_note = end_last_note
-				end_last_note = end
+					still_evaluating = 0
+					create_note(last_note, start_last_note, end_last_note, piano)
+
+					last_note = get_note(pitch_frame_audio)
+					start_last_note = end_last_note
+					end_last_note = end
 		else:
 			#il pitch non è valido quindi o scrivo l'ultima nota (se diversa da 0) altrimenti aggiorno solo lo start
+			if abs(core.midi_to_hz(last_note) - pitch_frame_audio[_i-1]) <= 8 :
+				end_last_note = end
+
 			if last_note != 0:
 				still_evaluating = 0
 				create_note(last_note, start_last_note, end_last_note, piano)
@@ -117,13 +125,13 @@ np.set_printoptions(threshold=maxsize)
 
 # `y` = audio time series
 # `sr` sampling rate of `y`
-y, sr = lb.load(path=path_to_audio, sr=48000, mono=True)
+y, sr = lb.load(path=path_to_audio, sr=44100, mono=True)
 
 D = lb.get_duration(y=y, sr=sr) # durata
-S = np.abs(lb.stft(lb.util.normalize(y, fill=False))) # spettrogramma normalizzato
+S = np.abs(lb.stft(y)) # spettrogramma normalizzato
 
 #Rispettivamente gli array di pitch e ampiezze relativi ad ogni frame e suddivisi per frequenze (bins)
-pitches, magnitudes = lb.core.piptrack(S=S, sr=sr, threshold=0.9, center=False)
+pitches, magnitudes = lb.core.piptrack(S=S, sr=sr, threshold=0.1, center=False)
 nframe = len(pitches[0]) # nframe
 
 #Estrae i pitch relativi alla frequenza con massima ampiezza per ogni frame
