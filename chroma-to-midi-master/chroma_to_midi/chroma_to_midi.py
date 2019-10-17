@@ -7,9 +7,13 @@ import scipy.signal as filt
 from sys import argv, maxsize
 
 # VARIABILI GLOBALI PER IL CONTROLLO DELLE PRINCIPALI IMPOSTAZIONI DI PITCH TRACKING E CREAZIONE DELLE NOTE MIDI
-TIME_THRESHOLD_NOTE_CREATION=0.00
-WINDOW_MEDIAN_LENGTH=31
-THRESHOLD_MAGNITUDE =3
+TIME_THRESHOLD_NOTE_CREATION=0.12
+WINDOW_MEDIAN_LENGTH=3
+THRESHOLD_MAGNITUDE=1
+DELTA_FREQ=12
+RATIO_FORMANT=0.5
+FMIN_PIPTRACK=60
+FMAX_PIPTRACK=250
 
 # Crea una note midi aggiungendola alla traccia passata come parametro; la nota è effettivamente inserita se rispetta la soglia di lunghezza imposta dalla variabile globale
 def create_note(new_note, start_time, end_time, piano):
@@ -42,7 +46,6 @@ def pitches_to_midi(pitch_array):
 		# aggiorno il valore dell'end
 		end += D/nframe
 
-
 		if pitch_frame_audio != 0:
 			#prima nota valida, salvo info riguardo la nota, lo start e la fine
 			if vi == 0:
@@ -67,7 +70,7 @@ def pitches_to_midi(pitch_array):
 			#Se è cambiata la nota e l'attuale è valida, scrivo la nota precedente dall'inizio della sua esecuzione fino all'istante attuale e vado avanti
 			else:
 
-				if abs(core.midi_to_hz(last_note) - pitch_frame_audio[_i-1]) <= 8 :
+				if abs(core.midi_to_hz(last_note) - pitch_array[_i-1]) <= DELTA_FREQ :
 					#Assegno la nuova fine della nota
 					still_evaluating = 1
 					end_last_note = end
@@ -81,7 +84,7 @@ def pitches_to_midi(pitch_array):
 					end_last_note = end
 		else:
 			#il pitch non è valido quindi o scrivo l'ultima nota (se diversa da 0) altrimenti aggiorno solo lo start
-			if abs(core.midi_to_hz(last_note) - pitch_frame_audio[_i-1]) <= 8 :
+			if _i > 0 and abs(core.midi_to_hz(last_note) - pitch_array[_i-1]) <= DELTA_FREQ :
 				end_last_note = end
 
 			if last_note != 0:
@@ -112,6 +115,10 @@ def extract_max(pitch_list, magnitude_list, frame_length):
 		f_max = magnitude_list[:, i].argmax()
 
 		if magnitude_list[f_max][i] > THRESHOLD_MAGNITUDE:
+			#se il rapporto dell'ampiezza della sottoarmonica è confrontabilie con la frequenza trovata seleziona la prima
+			if magnitude_list[int(f_max/2)][i]/magnitude_list[int(f_max)][i] > RATIO_FORMANT:
+				f_max = int(f_max/2)
+
 			#salva il pitch correlato
 			new_pitches[i] = pitch_list[f_max][i]
 		else:
@@ -131,7 +138,7 @@ D = lb.get_duration(y=y, sr=sr) # durata
 S = np.abs(lb.stft(y)) # spettrogramma normalizzato
 
 #Rispettivamente gli array di pitch e ampiezze relativi ad ogni frame e suddivisi per frequenze (bins)
-pitches, magnitudes = lb.core.piptrack(S=S, sr=sr, threshold=0.1, center=False)
+pitches, magnitudes = lb.core.piptrack(S=S, sr=sr, threshold=0.1, fmin=FMIN_PIPTRACK, fmax=FMAX_PIPTRACK, center=False)
 nframe = len(pitches[0]) # nframe
 
 #Estrae i pitch relativi alla frequenza con massima ampiezza per ogni frame
