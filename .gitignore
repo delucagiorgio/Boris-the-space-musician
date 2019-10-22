@@ -1,2 +1,7 @@
+*.DS_Store
+*.asd
 *.pyc
+
 __pycache__
+node_modules
+.idea/
