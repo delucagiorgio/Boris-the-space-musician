@@ -24,7 +24,7 @@ np.set_printoptions(threshold=maxsize)
 
 #Leggo i due file midi
 harm_midi = pm.PrettyMIDI(HARMONY_FILENAME)
-mel_midi = pm.PrettyMIDI(MELODY_FILENAME)
+mel_midi = pm.PrettyMIDI(MELODY_FILENAME) 
 
 #Cerco la scala con cui creare l'astrazione melodica
 all_notes = []
