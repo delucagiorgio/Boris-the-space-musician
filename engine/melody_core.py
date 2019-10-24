@@ -168,8 +168,8 @@ def get_best_scales(notes_scale):
 
 	return possible_scales
 
-HARMONY_FILENAME="harmony.mid"
-MELODY_FILENAME="voce.mid"
+HARMONY_FILENAME="out/harmony.mid"
+MELODY_FILENAME="out/voce.mid"
 np.set_printoptions(threshold=maxsize)
 
 #	Leggo i due file midi
