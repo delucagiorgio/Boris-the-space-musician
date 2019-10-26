@@ -7,13 +7,13 @@ import scipy.signal as filt
 from sys import argv, maxsize
 
 # VARIABILI GLOBALI PER IL CONTROLLO DELLE PRINCIPALI IMPOSTAZIONI DI PITCH TRACKING E CREAZIONE DELLE NOTE MIDI
-TIME_THRESHOLD_NOTE_CREATION=0.12
+TIME_THRESHOLD_NOTE_CREATION=0.15
 WINDOW_MEDIAN_LENGTH=3
 THRESHOLD_MAGNITUDE=1
 DELTA_FREQ=12
 RATIO_FORMANT=0.5
 FMIN_PIPTRACK=60
-FMAX_PIPTRACK=250
+FMAX_PIPTRACK=1000
 
 # Crea una note midi aggiungendola alla traccia passata come parametro; la nota è effettivamente inserita se rispetta la soglia di lunghezza imposta dalla variabile globale
 def create_note(new_note, start_time, end_time, piano):
@@ -138,7 +138,7 @@ D = lb.get_duration(y=y, sr=sr) # durata
 S = np.abs(lb.stft(y)) # spettrogramma normalizzato
 
 #Rispettivamente gli array di pitch e ampiezze relativi ad ogni frame e suddivisi per frequenze (bins)
-pitches, magnitudes = lb.core.piptrack(S=S, sr=sr, threshold=0.1, fmin=FMIN_PIPTRACK, fmax=FMAX_PIPTRACK, center=False)
+pitches, magnitudes = lb.core.piptrack(S=S, sr=sr, threshold=0.3, fmin=FMIN_PIPTRACK, fmax=FMAX_PIPTRACK, center=False)
 nframe = len(pitches[0]) # nframe
 
 #Estrae i pitch relativi alla frequenza con massima ampiezza per ogni frame
