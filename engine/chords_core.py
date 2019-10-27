@@ -3,13 +3,13 @@ import librosa.core as core
 import random as rnd
 
 class Mode:
-    root = None
+    tonic = None
     offset = None
     name = None
     seq = None
 
-    def __init__(self, root=None, offset=None, name=None, mode=None):
-        self.root=root
+    def __init__(self, tonic=None, offset=None, name=None, mode=None):
+        self.tonic=tonic
         self.name=name
         self.seq=mode
         self.offset=offset
@@ -22,14 +22,14 @@ AEOLIAN    = "Aeolian"
 PHRYGIAN   = "Phrygian"
 LOCRIAN    = "Locrian"
 
-MAJOR      = [1, 3, 5]
-MINOR      = [1, 2, 5]
-DIMINISHED = [1, 2, 4]
-AUGMENTED  = [1, 2, 6]
+MAJOR      = [0, 4, 7]
+MINOR      = [0, 3, 7]
+DIMINISHED = [0, 3, 6]
+AUGMENTED  = [0, 4, 8]
 
 NOTE = ["C" , "C#" , "D" , "D#" , "E" , "F" , "F#" , "G" , "G#" , "A" , "A#" , "B"]
 
-# Ordered from major to minor
+# ORDERED FROM MAJOR TO MINOR
 MODES = [
     Mode("C",  0, IONIAN,      [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1]),
     Mode("F",  1, LYDIAN,      [1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1]),
@@ -51,9 +51,9 @@ HARMONY_PROGRESSION = (
 )
 
 class Fifth:
-    def __init__(self, root=None, mode=None, tempo=120):
-        self.root  = NOTE.index("C") if root is None else NOTE.index(root)
-        self.mode = [x for x in MODES if x.root == "C"][0] if mode is None else [x for x in MODES if x.name == mode][0]
+    def __init__(self, tonic=None, mode=None, tempo=120):
+        self.tonic  = NOTE.index("C") if tonic is None else NOTE.index(tonic)
+        self.mode = [x for x in MODES if x.tonic == "C"][0] if mode is None else [x for x in MODES if x.name == mode][0]
         self.tempo = tempo
 
         self.major = []
@@ -73,7 +73,7 @@ class Fifth:
     def circle(self, fifths=None):
         if fifths is None:
             fifths = []
-            fifths.append(NOTE[self.root])
+            fifths.append(NOTE[self.tonic])
 
         degree = 0
 
@@ -84,12 +84,12 @@ class Fifth:
                     degree += 1
 
                     if degree == 5:
-                        fifths.append(NOTE[self.root])
+                        fifths.append(NOTE[self.tonic])
                         return self.circle(fifths)
 
-                self.root = (self.root + 1) % len(NOTE)
-                if self.root > len(NOTE) - 1:
-                    self.root = 0
+                self.tonic = (self.tonic + 1) % len(NOTE)
+                if self.tonic > len(NOTE) - 1:
+                    self.tonic = 0
 
         self.major.append(fifths[-1 + self.mode.offset])
         self.major.append(fifths[0 + self.mode.offset])
@@ -102,33 +102,28 @@ class Fifth:
         self.diminished.append(fifths[5 + self.mode.offset])
 
         self.fifths = fifths
-        self.root = NOTE.index(fifths[0])
+        self.tonic = NOTE.index(fifths[0])
 
         # REORDER SCALE DEGREE
-        self.cycle.append(NOTE[self.root]) # I DEGREE
+        self.cycle.append(NOTE[self.tonic]) # I DEGREE
         for i in range(1,12): # FROM II - VII DEGREE
-            cur = (self.root + i) % len(NOTE)
+            cur = (self.tonic + i) % len(NOTE)
             if len(self.cycle) <= 7:
                 if  NOTE[cur] in self.major or NOTE[cur] in self.minor or NOTE[cur] in self.diminished:
                     self.cycle.append(NOTE[cur])
 
 
-    def get_chords(self, root, chord=None):
-        root = NOTE.index(root)
+    def get_chords(self, tonic, chord=None):
+        tonic = NOTE.index(tonic)
         chord = MAJOR if chord is None else chord
         degree = 0
 
         chords = []
-        for idx, val in enumerate(self.mode.seq):
 
-            if val == 1:
-                degree += 1
-                if degree in chord:
-                    chords.append(NOTE[root])
+        chords.append(NOTE[(tonic + chord[0]) % 12])
+        chords.append(NOTE[(tonic + chord[1]) % 12])
+        chords.append(NOTE[(tonic + chord[2]) % 12])
 
-            root = (root + 1) % len(NOTE)
-            if root > len(NOTE) - 1:
-                root = 0
         return chords
 
     def set_progression(self, progression=None, tempo=120):
@@ -144,25 +139,25 @@ class Fifth:
             else:
                 self.chords.append(self.get_chords(self.cycle[val], DIMINISHED))
 
-        for chord in self.chords:
-            self.midi_gen(chord)
+        for idx, chord in enumerate(self.chords):
+            self.midi_gen(idx, chord)
 
         return self.chords
 
-    def midi_gen(self, notes, start=0, end=2):
-        if len(self.inst.notes) > 0:
-            if isinstance(notes, list):
-                start = len(self.inst.notes)/len(notes) * end
-                end = start + 2
-            elif isinstance(notes, str):
-                start = len(self.inst.notes) * end
-                end = start + 2
+    def midi_gen(self, n, notes):
+        start = 0 + n * 2
+        end = start + 2
 
         if isinstance(notes, list):
-            for note in notes:
-                note = core.note_to_midi(note + "4")
-                note = midi.Note(velocity=127, pitch=(note), start=start, end=end)
-                self.inst.notes.append(note)
+            for idx, note in enumerate(notes):
+                note_to_midi = core.note_to_midi(note + "4")
+                note_to_midi = midi.Note(velocity=127, pitch=(note_to_midi), start=start, end=end)
+                self.inst.notes.append(note_to_midi)
+
+                if idx == 1:
+                    note_to_midi = core.note_to_midi(note + "3")
+                    note_to_midi = midi.Note(velocity=127, pitch=(note_to_midi), start=start, end=end)
+                    self.inst.notes.append(note_to_midi)
         elif isinstance(notes, str):
             notes = core.note_to_midi(notes + "4")
             notes = midi.Note(velocity=127, pitch=(notes), start=start, end=end)
@@ -173,13 +168,12 @@ class Fifth:
         self.pretty.write(path + fileName + ".mid")
         return self.pretty
 
-# print(fifths)
 happy = False
-rnd_note = rnd.randint(0, 2) if happy else rnd.randint(3, len(MODES) - 1)
+rnd_note = rnd.randint(0, len(NOTE)-1)
 rnd_mode = rnd.randint(0, 2) if happy else rnd.randint(3, len(MODES) - 1)
 rnd_prog = rnd.randint(0, len(HARMONY_PROGRESSION) - 1)
 
-b = Fifth(MODES[rnd_note].root, MODES[rnd_mode].name)
+b = Fifth(NOTE[rnd_note], MODES[rnd_mode].name)
 b.set_progression(HARMONY_PROGRESSION[rnd_prog][0])
-#b.get_midi(modes[rnd_mode].root + "_" + progression[rnd_prog][1])
-b.get_midi()
+b.get_midi(NOTE[rnd_note] + "_" + MODES[rnd_mode].name + "_" + HARMONY_PROGRESSION[rnd_prog][1])
+#b.get_midi()
