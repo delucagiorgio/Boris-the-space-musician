@@ -1,7 +1,8 @@
 import pretty_midi as pm
 import random
 
-from engine.chords_core import *
+from engine.assets import music_assets as music
+
 
 STRONG_GRADES = []
 WEAK_GRADES = []
@@ -29,7 +30,7 @@ class Melody:
     melody_notes = None
 
     def __init__(self, tonic=None, offset=None, melody_notes=None):
-        self.tonic = NOTE.index(tonic)
+        self.tonic = music.notes.index(tonic)
         self.offset = offset
         self.scale = get_scale(self.tonic, offset)
         self.melody_notes = melody_notes.instruments[0].notes
@@ -159,6 +160,6 @@ class Melody:
 MELODY_FILENAME = "out/piano.mid"
 #	Leggo i due file midi
 mel_midi = pm.PrettyMIDI(MELODY_FILENAME)
-m = Melody(NOTE[0], MODES[3], mel_midi)
+m = Melody(music.notes[0], music.modes[3], mel_midi)
 
 m.create_melody()
