@@ -1,27 +1,12 @@
+from engine.assets import music_assets as music
 import pretty_midi as pm
 import random
-
-from engine.assets import music_assets as music
-
 
 STRONG_GRADES = []
 WEAK_GRADES = []
 THRESHOLD_NOVELTY = 0.75
 BAR_LENGTH = 2.0
 
-
-def get_scale(tonic, offset):
-    scale = []
-
-    for idx, notes in enumerate(offset.seq):
-        if notes == 1:
-            scale.append((idx + tonic) % 12)
-            if idx % 2 == 0:
-                STRONG_GRADES.append((idx + tonic) % 12)
-            else:
-                WEAK_GRADES.append((idx + tonic) % 12)
-
-    return scale
 
 class Melody:
     tonic = None
@@ -32,9 +17,21 @@ class Melody:
     def __init__(self, tonic=None, offset=None, melody_notes=None):
         self.tonic = music.notes.index(tonic)
         self.offset = offset
-        self.scale = get_scale(self.tonic, offset)
+        self.scale = self.get_scale(self.tonic, offset)
         self.melody_notes = melody_notes.instruments[0].notes
 
+    @staticmethod
+    def get_scale(tonic, offset):
+        scale = []
+        for idx, notes in enumerate(offset.seq):
+            if notes == 1:
+                scale.append((idx + tonic) % 12)
+                if idx % 2 == 0:
+                    STRONG_GRADES.append((idx + tonic) % 12)
+                else:
+                    WEAK_GRADES.append((idx + tonic) % 12)
+
+        return scale
 
     def get_notes_from_scale(self, mel_note, note_prev):
         scale_notes = []
@@ -46,8 +43,8 @@ class Melody:
         for index, note in enumerate(self.scale):
             pitch_note = int(note_ref.pitch - note_ref.pitch % 12) + note
 
-            #	Se il grado è inferiore rispetto al precedente,
-            #	per costruzione implica che si trovi un ottava sopra
+            # Se il grado è inferiore rispetto al precedente,
+            # per costruzione implica che si trovi un ottava sopra
             if index > 0 and self.scale[index - 1] > note:
                 pitch_note = pitch_note + 12
 
@@ -61,8 +58,8 @@ class Melody:
         scale_notes = self.get_notes_from_scale(mel_note, note_prev)
         possible_notes = []
 
-        #	Se la nota precedente non esiste, prendi tutta la scala come possibile range di note
-        #	Altrimenti considera solo le note nel range
+        # Se la nota precedente non esiste, prendi tutta la scala come possibile range di note
+        # Altrimenti considera solo le note nel range
 
         if note_prev:
 
@@ -73,9 +70,9 @@ class Melody:
                 min_key_midi = max_key_midi
                 max_key_midi = note_prev.pitch
 
-            #	Se il delta è diverso da zero, la melodia richiede uno spostamento,
-            #	quindi si rimuove la nota creata precedentemente, se presente nella
-            #	scala in valutazione
+            # Se il delta è diverso da zero, la melodia richiede uno spostamento,
+            # quindi si rimuove la nota creata precedentemente, se presente nella
+            # scala in valutazione
             if delta != 0.0:
                 index_prev_note = None
                 for note in scale_notes:
@@ -103,20 +100,20 @@ class Melody:
 
         return possible_notes
 
-    #	Cerca il gruppo di gradi più forte possibile
-    def get_default_case(self, possible_grades):
+    # Cerca il gruppo di gradi più forte possibile
+    @staticmethod
+    def get_default_case(possible_grades):
         grades_default = [x for x in possible_grades if x.pitch % 12 in STRONG_GRADES]
         if not grades_default:
             grades_default = [x for x in possible_grades if x.pitch % 12 in WEAK_GRADES]
         return grades_default
 
-    #	Seleziono la nota in base alla sua lunghezza
+    # Seleziono la nota in base alla sua lunghezza
     def select_compatible_grades(self, possible_grades, mel_note_len):
-        acceptable_grades = []
-        #	Dai sedicesimi alle più veloci
+        # Dai sedicesimi alle più veloci
         if mel_note_len <= BAR_LENGTH / 12.0:
             acceptable_grades = [x for x in possible_grades if x.pitch % 12 in WEAK_GRADES]
-        #	Dai quarti alle più lunghe
+        # Dai quarti alle più lunghe
         else:
             acceptable_grades = [x for x in possible_grades if x.pitch % 12 in STRONG_GRADES]
 
@@ -125,7 +122,7 @@ class Melody:
 
         return acceptable_grades
 
-    #	Seleziona casualmente uno dei gradi compatibili
+    # Seleziona casualmente uno dei gradi compatibili
     def get_output_note(self, delta, note, prev_note):
 
         possible_notes = self.get_possible_note(delta, prev_note, note)
@@ -158,7 +155,7 @@ class Melody:
 
 
 MELODY_FILENAME = "out/piano.mid"
-#	Leggo i due file midi
+# Leggo i due file midi
 mel_midi = pm.PrettyMIDI(MELODY_FILENAME)
 m = Melody(music.notes[0], music.modes[3], mel_midi)
 
