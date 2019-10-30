@@ -11,7 +11,7 @@ comments = []
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "GET":
-        return render_template("main_page.html", comments=comments)
+        return render_template("recorder.html", comments=comments)
 
     comments.append(request.form["contents"])
     return redirect(url_for('index'))

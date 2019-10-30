@@ -131,7 +131,7 @@ class Melody:
 
         return random.choice(possible_grades)
 
-    def create_melody(self, filename="output_melody.mid"):
+    def create_melody(self, filename="out/output_melody.mid"):
 
         output_midi = pm.PrettyMIDI()
         piano_program = pm.instrument_name_to_program('Acoustic Grand Piano')
@@ -154,9 +154,13 @@ class Melody:
         output_midi.write(filename)
 
 
-MELODY_FILENAME = "out/piano.mid"
+MELODY_FILENAME = "out/voce.mid"
 # Leggo i due file midi
 mel_midi = pm.PrettyMIDI(MELODY_FILENAME)
-m = Melody(music.notes[0], music.modes[3], mel_midi)
+m = Melody(
+    music.notes[0],
+    music.modes[3],
+    mel_midi)
 
 m.create_melody()
+

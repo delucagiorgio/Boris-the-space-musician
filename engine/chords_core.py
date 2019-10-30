@@ -128,7 +128,7 @@ class Fifth:
         return self.pretty
 
 
-happy = False
+happy = True
 rnd_note = rnd.randint(0, len(music.notes) - 1)
 rnd_mode = rnd.randint(0, 2) if happy else rnd.randint(3, len(music.modes) - 1)
 rnd_prog = rnd.randint(0, len(music.progressions) - 1)
@@ -137,4 +137,5 @@ b = Fifth(music.notes[rnd_note], music.modes[rnd_mode].name)
 b.set_progression(music.progressions[rnd_prog][0])
 b.get_midi(music.notes[rnd_note] + "_" + music.modes[rnd_mode].name + "_" + music.progressions[rnd_prog][1])
 #b.get_midi()
+
 
