@@ -1,7 +1,6 @@
 from engine.assets import music_assets as music
 import librosa.core as core
 import pretty_midi as midi
-import random as rnd
 
 
 class Fifth:
@@ -123,19 +122,17 @@ class Fifth:
             self.inst.notes.append(notes)
 
     def get_midi(self, file_name="chord", path="out/"):
+        final_path = path + file_name + ".mid"
+
         self.pretty.instruments.append(self.inst)
-        self.pretty.write(path + file_name + ".mid")
-        return self.pretty
+        self.pretty.write(final_path)
+        return final_path
 
-
-happy = True
-rnd_note = rnd.randint(0, len(music.notes) - 1)
-rnd_mode = rnd.randint(0, 2) if happy else rnd.randint(3, len(music.modes) - 1)
-rnd_prog = rnd.randint(0, len(music.progressions) - 1)
-
-b = Fifth(music.notes[rnd_note], music.modes[rnd_mode].name)
-b.set_progression(music.progressions[rnd_prog][0])
-b.get_midi(music.notes[rnd_note] + "_" + music.modes[rnd_mode].name + "_" + music.progressions[rnd_prog][1])
-#b.get_midi()
-
-
+# happy = True
+# rnd_note = rnd.randint(0, len(music.notes) - 1)
+# rnd_mode = rnd.randint(0, 2) if happy else rnd.randint(3, len(music.modes) - 1)
+# rnd_prog = rnd.randint(0, len(music.progressions) - 1)
+#
+# b = Fifth(music.notes[rnd_note], music.modes[rnd_mode].name)
+# b.set_progression(music.progressions[rnd_prog][0])
+# b.get_midi(music.notes[rnd_note] + "_" + music.modes[rnd_mode].name + "_" + music.progressions[rnd_prog][1])
