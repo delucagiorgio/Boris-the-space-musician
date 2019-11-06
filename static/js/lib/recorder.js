@@ -17,10 +17,12 @@ CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFT
 DEALINGS IN THE SOFTWARE.
 */
 
+var recLength = 0,
+  recBuffersL = [],
+  recBuffersR = [],
+  sampleRate;
+
 (function(window){
-
-  var WORKER_PATH = "/static/js/lib/recorderWorker.js";
-
   var Recorder = function(source, cfg){
     var config = cfg || {};
     var bufferLen = config.bufferLen || 4096;
@@ -31,33 +33,18 @@ DEALINGS IN THE SOFTWARE.
        this.node = this.context.createScriptProcessor(bufferLen, 2, 2);
     }
    
-    var worker = new Worker(config.workerPath || WORKER_PATH);
-    worker.postMessage({
-      command: 'init',
-      config: {
+    init({
         sampleRate: this.context.sampleRate
-      }
-    });
+      })
     var recording = false,
       currCallback;
 
     this.node.onaudioprocess = function(e){
       if (!recording) return;
-      worker.postMessage({
-        command: 'record',
-        buffer: [
+      record([
           e.inputBuffer.getChannelData(0),
           e.inputBuffer.getChannelData(1)
-        ]
-      });
-    }
-
-    this.configure = function(cfg){
-      for (var prop in cfg){
-        if (cfg.hasOwnProperty(prop)){
-          config[prop] = cfg[prop];
-        }
-      }
+        ])
     }
 
     this.record = function(){
@@ -69,50 +56,51 @@ DEALINGS IN THE SOFTWARE.
     }
 
     this.clear = function(){
-      worker.postMessage({ command: 'clear' });
+      clear();
     }
 
-    this.getBuffers = function(cb) {
-      currCallback = cb || config.callback;
-      worker.postMessage({ command: 'getBuffers' })
-    }
-
-    this.exportWAV = function(cb, type){
-      currCallback = cb || config.callback;
-      type = type || config.type || 'audio/wav';
-      if (!currCallback) throw new Error('Callback not set');
-      worker.postMessage({
-        command: 'exportWAV',
-        type: type
-      });
-    }
-
-    this.exportMonoWAV = function(cb, type){
-      currCallback = cb || config.callback;
-      type = type || config.type || 'audio/wav';
-      if (!currCallback) throw new Error('Callback not set');
-      worker.postMessage({
-        command: 'exportMonoWAV',
-        type: type
-      });
-    }
-
-    worker.onmessage = function(e){
-      var blob = e.data;
-      currCallback(blob);
+    this.getBuffers = function() {
+      var res = getBuffers()
+      return res
     }
 
     source.connect(this.node);
     this.node.connect(this.context.destination);   // if the script node is not connected to an output the "onaudioprocess" event is not triggered in chrome.
   };
 
-  Recorder.setupDownload = function(blob, filename){
-    var url = (window.URL || window.webkitURL).createObjectURL(blob);
-    var link = document.getElementById("save");
-    link.href = url;
-    link.download = filename || 'output.wav';
+  window.Recorder = Recorder;
+
+  function init(config){
+    sampleRate = config.sampleRate;
   }
 
-  window.Recorder = Recorder;
+  function record(inputBuffer){
+    recBuffersL.push(inputBuffer[0]);
+    recBuffersR.push(inputBuffer[1]);
+    recLength += inputBuffer[0].length;
+  }
+
+  function clear(){
+    recLength = 0;
+    recBuffersL = [];
+    recBuffersR = [];
+  }
+
+  function getBuffers() {
+    var buffers = [];
+    buffers.push( mergeBuffers(recBuffersL, recLength) );
+    buffers.push( mergeBuffers(recBuffersR, recLength) );
+    return buffers;
+  }
+
+  function mergeBuffers(recBuffers, recLength){
+    var result = new Float32Array(recLength);
+    var offset = 0;
+    for (var i = 0; i < recBuffers.length; i++){
+      result.set(recBuffers[i], offset);
+      offset += recBuffers[i].length;
+    }
+    return result;
+  }
 
 })(window);

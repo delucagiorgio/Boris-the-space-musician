@@ -20,44 +20,19 @@ let audioInput = null,
     realAudioInput = null,
     inputPoint = null,
     audioRecorder = null;
-let recIndex = 0;
-
-function gotBuffers( buffers ) {
-    let canvas = document.getElementById( "wavedisplay" );
-    drawBuffer( canvas.width, canvas.height, canvas.getContext('2d'), buffers[0] );
-    let wav = audioRecorder.exportMonoWAV( doneEncoding );
-}
-
-function drawBuffer( width, height, context, data ) {
-    var step = Math.ceil( data.length / width );
-    var amp = height / 2;
-    context.fillStyle = "silver";
-    context.clearRect(0,0,width,height);
-    for(var i=0; i < width; i++){
-        var min = 1.0;
-        var max = -1.0;
-        for (j=0; j<step; j++) {
-            var datum = data[(i*step)+j];
-            if (datum < min)
-                min = datum;
-            if (datum > max)
-                max = datum;
-        }
-        context.fillRect(i,(1+min)*amp,1,Math.max(1,(max-min)*amp));
-    }
-}
-
-function doneEncoding( blob ) {
-    Recorder.setupDownload( blob, "myRecording" + ((recIndex<10)?"0":"") + recIndex + ".wav" );
-    recIndex++;
-}
 
 function toggleRecording( e ) {
     if (e.classList.contains("recording")) {
         // stop recording
         audioRecorder.stop();
         e.classList.remove("recording");
-        audioRecorder.getBuffers( gotBuffers );
+        var buffer = audioRecorder.getBuffers();
+        var audioBlob = new Blob(buffer[0], {type:'audio/wav'});
+        var cc = convertBlobToBase64(audioBlob)
+        cc.then(function(result) {
+            // result -> base64
+            return result;
+         });
     } else {
         // start recording
         if (!audioRecorder)
@@ -124,5 +99,13 @@ function initAudio() {
             console.log(e);
         });
 }
-
 window.addEventListener('load', initAudio );
+
+const convertBlobToBase64 = blob => new Promise((resolve, reject) => {
+    const reader = new FileReader;
+    reader.onerror = reject;
+    reader.onload = () => {
+        resolve(reader.result);
+    };
+    reader.readAsDataURL(blob);
+});
