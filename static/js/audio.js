@@ -31,7 +31,7 @@ function toggleRecording( e ) {
         var cc = convertBlobToBase64(audioBlob)
         cc.then(function(result) {
             // result -> base64
-            return result;
+            return getMelody(result);
          });
     } else {
         // start recording

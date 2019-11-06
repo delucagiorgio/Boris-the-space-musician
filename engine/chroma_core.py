@@ -183,7 +183,7 @@ class Chroma:
 
 		return new_pitches
 
-
-b = Chroma(path_audio="in/voce.wav", path_midi="out/voce", tempo=120)
-b.run()
-
+#
+# b = Chroma(path_audio="in/voce.wav", path_midi="out/voce", tempo=120)
+# b.run()
+#

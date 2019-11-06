@@ -154,13 +154,13 @@ class Melody:
         output_midi.write(filename)
 
 
-MELODY_FILENAME = "out/voce.mid"
-# Leggo i due file midi
-mel_midi = pm.PrettyMIDI(MELODY_FILENAME)
-m = Melody(
-    music.notes[0],
-    music.modes[3],
-    mel_midi)
-
-m.create_melody()
+# MELODY_FILENAME = "out/voce.mid"
+# # Leggo i due file midi
+# mel_midi = pm.PrettyMIDI(MELODY_FILENAME)
+# m = Melody(
+#     music.notes[0],
+#     music.modes[3],
+#     mel_midi)
+#
+# m.create_melody()
 
