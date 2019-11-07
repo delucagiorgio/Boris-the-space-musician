@@ -158,7 +158,7 @@ class Chroma:
 			self.create_note(last_note, start_last_note, end_last_note)
 
 		self.pretty.instruments.append(self.inst)
-		self.pretty.write(self.path_midi + ".mid")
+		self.pretty.write(self.path_midi)
 		return self.pretty
 
 	#  ESTRAE LE AMPIEZZE MASSIME IN OGNI FRAME E CALCOLA I PITCH CORRISPONDENTI

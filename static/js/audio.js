@@ -12,45 +12,36 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
-
 let audioContext = new AudioContext();
-let audioInput = null,
-    realAudioInput = null,
-    inputPoint = null,
-    audioRecorder = null;
+let audioInput = null;
+let realAudioInput = null;
+let inputPoint = null;
+let audioRecorder = null;
+let bufferSize = 2048;
+let mono = true;
+
 
 function toggleRecording( e ) {
     if (e.classList.contains("recording")) {
+        e.classList.remove("recording");
         // stop recording
         audioRecorder.stop();
-        e.classList.remove("recording");
-        var buffer = audioRecorder.getBuffers();
-        var audioBlob = new Blob(buffer[0], {type:'audio/wav'});
-        var cc = convertBlobToBase64(audioBlob)
-        cc.then(function(result) {
-            // result -> base64
-            return getMelody(result);
-         });
+        // export wav to blob
+        audioRecorder.exportWAV(function (blob) {
+            // export blob to base64
+            convertBlobToBase64(blob).then(function(base64) {
+                return getMelody(base64);
+            });
+        });
     } else {
+        e.classList.add("recording");
         // start recording
         if (!audioRecorder)
             return;
-        e.classList.add("recording");
         audioRecorder.clear();
         audioRecorder.record();
     }
-}
-
-function convertToMono( input ) {
-    let splitter = audioContext.createChannelSplitter(2);
-    let merger = audioContext.createChannelMerger(2);
-
-    input.connect( splitter );
-    splitter.connect( merger, 0, 0 );
-    splitter.connect( merger, 0, 1 );
-    return merger;
 }
 
 function gotStream(stream) {
@@ -61,13 +52,15 @@ function gotStream(stream) {
     audioInput = realAudioInput;
     audioInput.connect(inputPoint);
 
-    audioInput = convertToMono( audioInput );
-
     analyserNode = audioContext.createAnalyser();
-    analyserNode.fftSize = 2048;
+    analyserNode.fftSize = bufferSize;
     inputPoint.connect(analyserNode);
 
-    audioRecorder = new Recorder(inputPoint);
+    audioRecorder = new Recorder(inputPoint, {
+        bufferLen: bufferSize,
+        numChannels: (mono) ? 1 : 2,
+        mimeType: 'audio/wav'
+    });
 
     zeroGain = audioContext.createGain();
     zeroGain.gain.value = 0.0;
@@ -99,6 +92,7 @@ function initAudio() {
             console.log(e);
         });
 }
+
 window.addEventListener('load', initAudio );
 
 const convertBlobToBase64 = blob => new Promise((resolve, reject) => {

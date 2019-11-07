@@ -1,6 +1,6 @@
 import base64
+import hashlib
 import os
-import io
 import json
 import random as rnd
 
@@ -54,22 +54,46 @@ def get_chords():
 @app.route("/get_melody", methods=["POST"])
 def get_melody():
     if request.method == "POST":
-        base64_melody = request.values.get("blob")
+        # decode audio file
+        file_content = request.values.get("blob")
+        # remove base64 header
+        file_content = file_content[22:]
+        # convert from base64 to bytecodes
+        bytecodes = base64.b64decode(file_content)
+        # create hash code
+        hash_object = hashlib.sha256(bytecodes)
+        hex_dig = hash_object.hexdigest()
+        # generate temp file with hash to prevent conflict
+        in_file = 'in/' + hex_dig + '.wav'
+        out_file = 'in/' + hex_dig
+        # create file
+        with open(in_file, 'wb') as f:
+            f.write(bytecodes)
+            f.close()
+
+            b = Chroma(path_audio=in_file, path_midi=out_file, tempo=120)
+            b.run()
+
+        os.remove(in_file)
+
         # wave_melody = io.StringIO(base64_melody)
         midi_chords = request.values.get("title")
-        val = midi_chords.split("_")
-
-        # b = Chroma(path_audio=wave_melody, path_midi="out/voce", tempo=120)
-        # b.run()
+        params = midi_chords.split("_")
 
         # Leggo i due file midi
-        mel_midi = PrettyMIDI("out/" + midi_chords  + ".mid")
+        mel_midi = PrettyMIDI(out_file)
         m = Melody(
-            music.notes[int(val[0])],
-            music.modes[int(val[1])],
+            music.notes[int(params[0])],
+            music.modes[int(params[1])],
             mel_midi)
 
-        m.create_melody()
+        m.create_melody(output_filename=out_file)
 
+        with open(out_file, "rb") as f:
+            results = json.dumps({
+                "title": hex_dig,
+                "blob": base64.b64encode(f.read()).decode('ascii')
+            })
 
-        return "Ok"
+        os.remove(out_file)
+        return results
