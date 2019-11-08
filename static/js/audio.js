@@ -37,6 +37,7 @@ function toggleRecording( e ) {
     } else {
         e.classList.add("recording");
         // start recording
+        getChords(true);
         if (!audioRecorder)
             return;
         audioRecorder.clear();

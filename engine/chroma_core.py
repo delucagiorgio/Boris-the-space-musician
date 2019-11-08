@@ -5,13 +5,14 @@ import librosa.core as core
 import scipy.signal as filt
 
 #  VARIABILI GLOBALI PER IL CONTROLLO DELLE PRINCIPALI IMPOSTAZIONI DI PITCH TRACKING E CREAZIONE DELLE NOTE MIDI
-TIME_THRESHOLD_NOTE_CREATION = 0.12
+TIME_THRESHOLD_NOTE_CREATION = 0.1
 WINDOW_MEDIAN_LENGTH = 3
 THRESHOLD_MAGNITUDE = 0.01
 DELTA_FREQ = 12
 RATIO_FORMANT = 0.4
-FMIN_PIPTRACK = 20
+FMIN_PIPTRACK = 80
 FMAX_PIPTRACK = 800
+QUANTIZATION_UNIT = 2.0/8
 
 
 class Chroma:
@@ -77,6 +78,14 @@ class Chroma:
 	#  RISPETTA LA SOGLIA DI LUNGHEZZA IMPOSTA DALLA VARIABILE GLOBALE
 	def create_note(self, note, start, end):
 		if end - start > TIME_THRESHOLD_NOTE_CREATION:
+			if start % QUANTIZATION_UNIT != 0:
+				if start % QUANTIZATION_UNIT > QUANTIZATION_UNIT / 2:
+					start = start + (QUANTIZATION_UNIT - start % QUANTIZATION_UNIT)
+					end = end  + (QUANTIZATION_UNIT - start % QUANTIZATION_UNIT)
+				else:
+					start = start - (start % QUANTIZATION_UNIT)
+					end = end  - (start % QUANTIZATION_UNIT)
+
 			note = midi.Note(velocity=127, pitch=note, start=start, end=end)
 			self.inst.notes.append(note)
 

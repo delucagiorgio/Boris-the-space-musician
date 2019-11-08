@@ -3,7 +3,6 @@ let chordsMidi;
 
 $(document).ready(function () {
     // PLAY RANDOM MAJOR CHORDS
-    getChords(true);
 });
 
 var getMelody = blob => {
