@@ -1,11 +1,30 @@
 let chordsTitle;
 let chordsMidi;
+let chordsSequence = undefined;
+let chordsTone = new Tone.PolySynth({
+    polyphony : 16,
+    volume : 0 ,
+    detune : 0 ,
+    voice : Tone.Synth
+});
+
+let melodySequence = undefined;
+let melodyTone = new Tone.PolySynth({
+    polyphony : 16,
+    volume : 0 ,
+    detune : 0 ,
+    voice : Tone.Synth
+});
 
 $(document).ready(function () {
     // PLAY RANDOM MAJOR CHORDS
+    getChords(true);
+    // connect synth to master out
+    melodyTone.chain(new Tone.Volume(-20), Tone.Master);
+    chordsTone.chain(new Tone.Volume(-22), Tone.Master);
 });
 
-var getMelody = blob => {
+let getMelody = blob => {
     $.ajax({
         url: '/get_melody',
         dataType: 'json',
@@ -14,9 +33,11 @@ var getMelody = blob => {
             "title": chordsTitle,
             "blob": blob
         },
-        success: function(e) {
-            trigNote(e, -10);
-            playNote();
+        success: function(data) {
+            trigNote(data, melodyTone).then(function(sequence) {
+                melodySequence = sequence;
+                playNote(false);
+            });
         },
         error: function(e) {
             console.log(e)
@@ -32,11 +53,12 @@ let getChords = (major = true) => {
         data: {
             "major": major
         },
-        success: function(e) {
-            trigNote(e, -23);
-            chordsTitle = e.title;
-            chordsMidi =  e.blob;
-            playNote();
+        success: function(data) {
+            trigNote(data, chordsTone).then(function(sequence) {
+                chordsSequence = sequence;
+                chordsTitle = data.title;
+                chordsMidi =  data.blob;
+            });
         },
         error: function(e) {
             console.log(e)
@@ -44,7 +66,7 @@ let getChords = (major = true) => {
     });
 };
 
-dataURItoBlob = dataURI => {
+const dataURItoBlob = dataURI => {
     const byteString = atob(dataURI.split(',')[1]);
     const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
@@ -56,60 +78,57 @@ dataURItoBlob = dataURI => {
     return new Blob([ab], {type: mimeString});
 };
 
-trigNote = (data, volume = -22) => {
+const readSequence = (data, synth) => {
     // reader to convert midi blob
-    const reader = new FileReader();
-    // volume settings
-    const vol = new Tone.Volume(volume);
-    // synth polyphonic 4 voices
-    const synth = new Tone.PolySynth({
-        polyphony : 4,
-        volume : 0 ,
-        detune : 0 ,
-        voice : Tone.Synth
-    });
-    // connect synth to master out
-    synth.chain(vol, Tone.Master);
-    // reset synth clock
-    Tone.Transport.clear();
-    Tone.Transport.stop();
-    // get response
-    let blob = "data:audio/midi;base64," + data.blob;
-    // once opened the blob
-    reader.onload = e => {
-        // convert blob to tonejs format readable
-        const midiChords = MidiConvert.parse(e.target.result);
-        // set clock params
-        Tone.Transport.bpm.value = midiChords.bpm;
-        Tone.Transport.timeSignature = midiChords.timeSignature;
-        // trigger each note
-        midiChords.tracks.forEach(track => {
-            new Tone.Part((time, event) => {
-                synth.triggerAttackRelease(
-                    event.name,
-                    event.duration,
-                    time,
-                    event.velocity
-                );
-            }, track.notes).start(midiChords.startTime);
-/* TODO > Manage loop here
-            note.set({
-                "loop" : true,
-                "loopEnd" : "4m"
+    const temp = new FileReader();
+    let sequence;
+
+    return new Promise((resolve, reject) => {
+        temp.onerror = () => {
+            temp.abort();
+            reject(new DOMException("Problem parsing input file."));
+        };
+
+        temp.onload = () => {
+            // convert blob to tonejs format readable
+            const midiChords = MidiConvert.parse(temp.result);
+            // set clock params
+            Tone.Transport.bpm.value = midiChords.bpm;
+            Tone.Transport.timeSignature = midiChords.timeSignature;
+            // trigger each note
+            midiChords.tracks.forEach(track => {
+                sequence = new Tone.Part((time, event) => {
+                    synth.triggerAttackRelease(
+                        event.name,
+                        event.duration,
+                        time,
+                        event.velocity
+                    );
+                }, track.notes).start(midiChords.startTime);
             });
-            //start the note at the beginning of the Transport timeline
-            note.start(0);
-            //stop the note on the 4th measure
-            note.stop("9m");
-            */
-        });
-    };
-    // read midi file goto reader.onload
-    reader.readAsArrayBuffer(dataURItoBlob(blob));
+            resolve(sequence);
+        };
+        temp.readAsArrayBuffer(data);
+    });
 };
 
-playNote = () => {
+trigNote = (data, synth) => {
+    // reset synth clock
+    stopNote();
+    // get response
+    let blob = "data:audio/midi;base64," + data.blob;
+    // trigger the note
+    return readSequence(dataURItoBlob(blob), synth)
+};
+
+playNote = (withMelody = true) => {
     // once trigger finished, play
+    stopNote();
+    if (melodySequence !== undefined) {
+        if (!withMelody) {
+            melodySequence.removeAll();
+        }
+    }
     Tone.Transport.start();
 };
 
