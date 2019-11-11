@@ -1,6 +1,6 @@
 let chordsTitle;
 let chordsMidi;
-let chordsSequence = undefined;
+let chordsPart = new Tone.Part();
 let chordsTone = new Tone.PolySynth({
     polyphony : 16,
     volume : 0 ,
@@ -8,7 +8,8 @@ let chordsTone = new Tone.PolySynth({
     voice : Tone.Synth
 });
 
-let melodySequence = undefined;
+let melodyPartTemp = new Tone.Part();
+let melodyPart = new Tone.Part();
 let melodyTone = new Tone.PolySynth({
     polyphony : 16,
     volume : 0 ,
@@ -17,7 +18,7 @@ let melodyTone = new Tone.PolySynth({
 });
 
 $(document).ready(function () {
-    // PLAY RANDOM MAJOR CHORDS
+    // generate random chords
     getChords(true);
     // connect synth to master out
     melodyTone.chain(new Tone.Volume(-20), Tone.Master);
@@ -34,9 +35,8 @@ let getMelody = blob => {
             "blob": blob
         },
         success: function(data) {
-            trigNote(data, melodyTone).then(function(sequence) {
-                melodySequence = sequence;
-                playNote(false);
+            readBlob(data, melodyTone).then(function(part) {
+                melodyPartTemp = part;
             });
         },
         error: function(e) {
@@ -46,6 +46,8 @@ let getMelody = blob => {
 };
 
 let getChords = (major = true) => {
+    clearMelody();
+    clearChords();
     $.ajax({
         url: '/get_chords',
         dataType: 'json',
@@ -54,8 +56,8 @@ let getChords = (major = true) => {
             "major": major
         },
         success: function(data) {
-            trigNote(data, chordsTone).then(function(sequence) {
-                chordsSequence = sequence;
+            readBlob(data, chordsTone).then(function(part) {
+                chordsPart = part;
                 chordsTitle = data.title;
                 chordsMidi =  data.blob;
             });
@@ -78,10 +80,10 @@ const dataURItoBlob = dataURI => {
     return new Blob([ab], {type: mimeString});
 };
 
-const readSequence = (data, synth) => {
+const readPart = (data, synth) => {
     // reader to convert midi blob
     const temp = new FileReader();
-    let sequence;
+    let part;
 
     return new Promise((resolve, reject) => {
         temp.onerror = () => {
@@ -97,43 +99,94 @@ const readSequence = (data, synth) => {
             Tone.Transport.timeSignature = midiChords.timeSignature;
             // trigger each note
             midiChords.tracks.forEach(track => {
-                sequence = new Tone.Part((time, event) => {
+                part = new Tone.Part((time, note) => {
                     synth.triggerAttackRelease(
-                        event.name,
-                        event.duration,
+                        note.name,
+                        note.duration,
                         time,
-                        event.velocity
+                        note.velocity
                     );
                 }, track.notes).start(midiChords.startTime);
             });
-            resolve(sequence);
+            resolve(part);
         };
         temp.readAsArrayBuffer(data);
     });
 };
 
-trigNote = (data, synth) => {
+readBlob = (data, synth) => {
     // reset synth clock
     stopNote();
     // get response
     let blob = "data:audio/midi;base64," + data.blob;
     // trigger the note
-    return readSequence(dataURItoBlob(blob), synth)
+    return readPart(dataURItoBlob(blob), synth)
 };
 
 playNote = (withMelody = true) => {
-    // once trigger finished, play
+    // stop playing
     stopNote();
-    if (melodySequence !== undefined) {
-        if (!withMelody) {
-            melodySequence.removeAll();
-        }
-    }
+    // set mute on melody
+    melodyPartTemp.mute = !withMelody;
+    melodyPart.mute = !withMelody;
+    // start playing
     Tone.Transport.start();
 };
 
 stopNote = () => {
-    // once trigger finished, play
     Tone.Transport.clear();
     Tone.Transport.stop();
+};
+
+clearMelody = () => {
+    melodyPartTemp.removeAll();
+    melodyPart.removeAll();
+};
+
+clearChords = () => {
+    chordsPart.removeAll();
+};
+
+
+addMelody = () => {
+    let notes = [];
+    let melodyNotesLength = melodyPart._events.length;
+
+    if (melodyNotesLength > 0) {
+        // we are append
+        let startNote = melodyPart.loopEnd;
+
+        melodyPart._events.forEach(note => {
+            notes.push(note.value)
+        });
+        melodyPartTemp._events.forEach(note => {
+            let newNote = note.value;
+            newNote.time = newNote.time + startNote;
+            notes.push(newNote)
+        });
+
+        melodyPart = new Tone.Part((time, note) => {
+            melodyTone.triggerAttackRelease(
+                note.name,
+                note.duration,
+                time,
+                note.velocity
+            );
+        }, notes).start(0);
+    } else {
+        // we are init
+        melodyPartTemp._events.forEach(note => {
+            notes.push(note.value)
+        });
+
+        melodyPart = new Tone.Part((time, note) => {
+            melodyTone.triggerAttackRelease(
+                note.name,
+                note.duration,
+                time,
+                note.velocity
+            );
+        }, notes).start(0);
+    }
+    melodyPartTemp.removeAll();
 };

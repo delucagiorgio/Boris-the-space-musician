@@ -24,9 +24,9 @@ let mono = true;
 
 function toggleRecording( e ) {
     if (e.classList.contains("recording")) {
+        // stop recording
         e.classList.remove("recording");
         stopNote();
-        // stop recording
         audioRecorder.stop();
         // export wav to blob
         audioRecorder.exportWAV(function (blob) {
@@ -36,8 +36,8 @@ function toggleRecording( e ) {
             });
         });
     } else {
-        e.classList.add("recording");
         // start recording
+        e.classList.add("recording");
         playNote();
         if (!audioRecorder)
             return;
