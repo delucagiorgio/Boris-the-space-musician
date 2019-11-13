@@ -41,7 +41,7 @@ class Melody:
             note_ref = mel_note
 
         for index, note in enumerate(self.scale):
-            pitch_note = int(note_ref.pitch - note_ref.pitch % 12) + note
+            pitch_note = 60 + note
 
             # Se il grado è inferiore rispetto al precedente,
             # per costruzione implica che si trovi un ottava sopra
@@ -75,12 +75,12 @@ class Melody:
             # scala in valutazione
             if delta != 0.0:
                 index_prev_note = None
-                for note in scale_notes:
+                for idx_prev,note in enumerate(scale_notes):
                     if note.pitch == note_prev.pitch:
-                        index_prev_note = note
+                        index_prev_note = idx_prev
 
                 if index_prev_note:
-                    scale_notes.remove(index_prev_note)
+                    scale_notes.pop(index_prev_note)
 
             for midi_id in range(min_key_midi, max_key_midi + 1):
                 for note in scale_notes:
@@ -142,7 +142,7 @@ class Melody:
             delta = None
             if prev_note:
                 delta = note.pitch - self.melody_notes[index - 1].pitch
-                _add = 0 if delta == 0 else int(delta / abs(delta) * 2)
+                _add = 0 if delta == 0 else int(delta / abs(delta)) * 2
                 delta = delta + _add
 
             selected_note = self.get_output_note(delta, note, prev_note)
