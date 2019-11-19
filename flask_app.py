@@ -11,6 +11,7 @@ from engine import chords_core as chords
 from engine.assets import music_assets as music
 from engine.chroma_core import Chroma
 from engine.melody_core import Melody
+from engine.dialogflow_handler import BorisDialogFlow
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -97,3 +98,33 @@ def get_melody():
 
         os.remove(out_file)
         return results
+
+
+@app.route("/get_response_step", methods=["POST"])
+def get_melody():
+    if request.method == "POST":
+        # decode audio file
+        file_content = request.values.get("blob")
+        # get context of reference
+        context = request.values.get("input-context")
+        # remove base64 header
+        file_content = file_content[22:]
+        # convert from base64 to bytecodes
+        bytecodes = base64.b64decode(file_content)
+        # create hash code
+        hash_object = hashlib.sha256(bytecodes)
+        hex_dig = hash_object.hexdigest()
+        # generate temp file with hash to prevent conflict
+        in_file = 'in/' + hex_dig + '.wav'
+        response = None
+        # create file
+        with open(in_file, 'wb') as f:
+            f.write(bytecodes)
+            f.close()
+
+            b = BorisDialogFlow(audio_file=in_file)
+            response = b.detect_intent_audio(context_short_name=context)
+
+        os.remove(in_file)
+
+        return response
