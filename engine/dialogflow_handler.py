@@ -1,16 +1,14 @@
 import os
 import dialogflow_v2 as dialogflow
-from pydub import AudioSegment
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "AUI Boris-20278b34fe36.json"
-
 class BorisDialogFlow:
     project_id = None
     session_id = None
     language_code = 'it-IT'
     audio_file = None
 
-    def __init__(self, session_id ="f77d149440d346368503518e99c2ef45", project_id='aui-boris', audio_file='boris.wav'):
+    def __init__(self, session_id ="f77d149440d346368503518e99c2ef45", project_id='aui-boris', audio_file = None):
         self.project_id = project_id
         self.session_id = session_id
         self.audio_file = audio_file
@@ -34,11 +32,11 @@ class BorisDialogFlow:
         #print('Session path: {}\n'.format(session))
 
         #   Convert the audio to a mono channel wav.
-        sound = AudioSegment.from_wav(self.audio_file)
-        sound = sound.set_channels(1)
-        sound.export("X_" + self.audio_file, format="wav")
+        # sound = AudioSegment.from_wav(self.audio_file)
+        # sound = sound.set_channels(1)
+        # sound.export("X_" + self.audio_file, format="wav")
 
-        with open("X_" + self.audio_file, 'rb') as audio_file:
+        with open( self.audio_file, 'rb') as audio_file:
             input_audio = audio_file.read()
 
 
@@ -61,7 +59,8 @@ class BorisDialogFlow:
             session=session, query_input=query_input,
             input_audio=input_audio, query_params=query_params)
 
-        os.remove("X_" + self.audio_file)
+        # os.remove(self.audio_file)
+
         # print('=' * 20)
         # print('Query text: {}'.format(response.query_result.query_text))
         # print('Detected intent: {} (confidence: {})\n'.format(

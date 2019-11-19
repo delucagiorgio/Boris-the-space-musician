@@ -38,7 +38,6 @@ function toggleRecording( e ) {
     } else {
         // start recording
         e.classList.add("recording");
-        playNote();
         if (!audioRecorder)
             return;
         audioRecorder.clear();
@@ -96,12 +95,3 @@ function initAudio() {
 }
 
 window.addEventListener('load', initAudio );
-
-const convertBlobToBase64 = blob => new Promise((resolve, reject) => {
-    const reader = new FileReader;
-    reader.onerror = reject;
-    reader.onload = () => {
-        resolve(reader.result);
-    };
-    reader.readAsDataURL(blob);
-});

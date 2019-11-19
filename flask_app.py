@@ -101,7 +101,7 @@ def get_melody():
 
 
 @app.route("/get_response_step", methods=["POST"])
-def get_melody():
+def get_response_step():
     if request.method == "POST":
         # decode audio file
         file_content = request.values.get("blob")
@@ -124,7 +124,6 @@ def get_melody():
 
             b = BorisDialogFlow(audio_file=in_file)
             response = b.detect_intent_audio(context_short_name=context)
-
         os.remove(in_file)
 
         return response
