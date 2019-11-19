@@ -31,7 +31,7 @@ class BorisDialogFlow:
         sample_rate_hertz = 48000
 
         session = session_client.session_path(self.project_id, self.session_id)
-        print('Session path: {}\n'.format(session))
+        #print('Session path: {}\n'.format(session))
 
         #   Convert the audio to a mono channel wav.
         sound = AudioSegment.from_wav(self.audio_file)
