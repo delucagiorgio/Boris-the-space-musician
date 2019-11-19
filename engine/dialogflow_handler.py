@@ -10,14 +10,14 @@ class BorisDialogFlow:
     language_code = 'it-IT'
     audio_file = None
 
-    def __init__(self, session_id ="f77d149440d346368503518e99c2ef45", project_id='aui-boris', audio_file=None):
+    def __init__(self, session_id ="f77d149440d346368503518e99c2ef45", project_id='aui-boris', audio_file='boris.wav'):
         self.project_id = project_id
         self.session_id = session_id
         self.audio_file = audio_file
 
 
 
-    def detect_intent_audio(self, context_short_name):
+    def detect_intent_audio(self, context_short_name='CX_LEARN_TUTORIAL'):
 
         """Returns the result of detect intent with an audio file as input.
 
@@ -62,11 +62,15 @@ class BorisDialogFlow:
             input_audio=input_audio, query_params=query_params)
 
         os.remove("X_" + self.audio_file)
-        print('=' * 20)
-        print('Query text: {}'.format(response.query_result.query_text))
-        print('Detected intent: {} (confidence: {})\n'.format(
-            response.query_result.intent.display_name,
-            response.query_result.intent_detection_confidence))
-        print('Fulfillment text: {}\n'.format(
-            response.query_result.fulfillment_text))
-        return response.query_result.intent.display_name;
+        # print('=' * 20)
+        # print('Query text: {}'.format(response.query_result.query_text))
+        # print('Detected intent: {} (confidence: {})\n'.format(
+        #     response.query_result.intent.display_name,
+        #     response.query_result.intent_detection_confidence))
+        # print('Fulfillment text: {}\n'.format(
+        #     response.query_result.fulfillment_text))
+
+        out_context = response.query_result.output_contexts[0].name
+        splitted_context = out_context.split('/')
+
+        return splitted_context[len(splitted_context) - 1] if len(splitted_context) > 0 else None
