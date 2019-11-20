@@ -26,7 +26,7 @@ class BorisDialogFlow:
 
         # Note: hard coding audio_encoding and sample_rate_hertz for simplicity.
         audio_encoding = dialogflow.enums.AudioEncoding.AUDIO_ENCODING_LINEAR_16
-        sample_rate_hertz = 48000
+        sample_rate_hertz = 44100
 
         session = session_client.session_path(self.project_id, self.session_id)
         #print('Session path: {}\n'.format(session))
