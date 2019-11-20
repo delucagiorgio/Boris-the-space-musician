@@ -92,43 +92,43 @@ const Voice = (state) => {
 let VOICES = {
     CXSTART : Voice({
         name: EVNT.CXSTART,
-        path:"/static/audio/boris/hello.wav"}),
+        path:"/static/audio/boris/START.wav"}),
     CXLEARNTUTORIAL : Voice({
         name: EVNT.CXLEARNTUTORIAL,
-        path:"/static/audio/boris/piano.wav"}),
+        path:"/static/audio/boris/LEARN_TUTORIAL.wav"}),
     CXTUTORIALOK : Voice({
         name: EVNT.CXTUTORIALOK,
-        path:"/static/audio/boris/piano.wav"}),
+        path:"/static/audio/boris/TUTORIAL_OK.wav"}),
     CXTEMPO : Voice({
         name: EVNT.CXTEMPO,
-        path:"/static/audio/boris/piano.wav"}),
+        path:"/static/audio/boris/TEMPO.wav"}),
     CXFEELINGS : Voice({
         name: EVNT.CXFEELINGS,
-        path:"/static/audio/boris/piano.wav"}),
+        path:"/static/audio/boris/FEELINGS.wav"}),
     CXLIKECHORD : Voice({
         name: EVNT.CXLIKECHORD,
-        path:"/static/audio/boris/piano.wav"}),
+        path:"/static/audio/boris/LIKE_CHORD.wav"}),
     CXTRYSING : Voice({
         name: EVNT.CXTRYSING,
-        path:"/static/audio/boris/piano.wav"}),
+        path:"/static/audio/boris/TRY_SING.wav"}),
     CXLIKEMELODY : Voice({
         name: EVNT.CXLIKEMELODY,
-        path:"/static/audio/boris/piano.wav"}),
+        path:"/static/audio/boris/LIKE_MELODY.wav"}),
     CXRELISTENSONG : Voice({
         name: EVNT.CXRELISTENSONG,
-        path:"/static/audio/boris/piano.wav"}),
+        path:"/static/audio/boris/RELISTEN_SONG.wav"}),
     CXADDMELODY : Voice({
         name: EVNT.CXADDMELODY,
-        path:"/static/audio/boris/piano.wav"}),
+        path:"/static/audio/boris/ADD_MELODY.wav"}),
     CXNEWSONG : Voice({
         name: EVNT.CXNEWSONG,
-        path:"/static/audio/boris/piano.wav"}),
+        path:"/static/audio/boris/NEW_SONG.wav"}),
     CXRESTART : Voice({
         name: EVNT.CXRESTART,
-        path:"/static/audio/boris/piano.wav"}),
+        path:"/static/audio/boris/RESTART.wav"}),
     CXEND : Voice({
         name: EVNT.CXEND,
-        path:"/static/audio/boris/piano.wav"}),
+        path:"/static/audio/boris/END.wav"}),
 };
 
 const BEvents = () => {
@@ -234,17 +234,16 @@ const BEvents = () => {
                 // start recording input audio
                 self.startStream();
                 // event on speech
-                speechEvents.on('speaking', function(there = self) {
+                speechEvents.on('speaking', function() {
                     if (_DEBUG) console.log('[hark] speaking');
                 });
                 // event on stop speech
-                speechEvents.on('stopped_speaking', function(there = self) {
+                speechEvents.on('stopped_speaking', function() {
                     if (_DEBUG) console.log('[hark] stopped_speaking');
                     // stop recording after ~ milliseconds
                     setTimeout(function () {
                         speechEvents.stop();
-                        there.stopStream(there.nowContext, ajax);
-                        return callback();
+                        self.stopStream(self.nowContext, ajax, callback);
                     }, 800)
                 });
 
@@ -272,7 +271,7 @@ const BEvents = () => {
                 audioRecorder.record();
             })
         },
-        stopStream(inputContext, ajax = true) {
+        stopStream(inputContext, ajax = true, callback) {
             audioRecorder.stop();
             // export wav to blob
             audioRecorder.exportWAV(function (blob) {
@@ -288,15 +287,18 @@ const BEvents = () => {
                                 "blob": base64
                             },
                             success: function(data) {
-                                console.log(data)
-                                /*                            readBlob(data, melodyTone).then(function(part) {
-                                                                melodyPartTemp = part;
-                                                            });*/
+                                if (_DEBUG) console.log("[server] response success")
+                                callback(data)
                             },
                             error: function(e) {
-                                console.log(e)
+                                if (_DEBUG) {
+                                    console.log("[server] error on response");
+                                    console.log(e)
+                                }
                             },
                         });
+                    } else {
+                        callback();
                     }
                 });
             });
@@ -304,7 +306,7 @@ const BEvents = () => {
         call(input) {
             if (watchDogs === null) {
                 this.goWatchDogs(function () {
-                    console.log("[watchdogs] watchdogs never sleep")
+                    if (_DEBUG) console.log("[watchdogs] watchdogs never sleep")
                 });
             }
             switch (input) {
@@ -361,7 +363,7 @@ const BEvents = () => {
                     this.cxEnd();
                     break;
                 default:
-                    this.call(EVNT.CXLEARNTUTORIAL);
+                    this.call(this.nowContext);
                     break;
             }
         },
@@ -385,11 +387,13 @@ const BEvents = () => {
             // Boris will hask if you want to learn the tutorial
             VOICES.CXLEARNTUTORIAL.play(function () {
                 // Boris will wait your answer
-                self.goHank(function () {
+                self.goHank(function (response) {
+                    if (_DEBUG) console.log("[boris] next context > " + response.context);
                     // send to server the request with CONTEXT
+                    let nextEvent = response.context;
+                    nextEvent = nextEvent.toUpperCase();
                     // the response will call the next event
-                    // return self.call(response.context)
-
+                    return self.call(nextEvent)
                 }, true);
             })
         },
@@ -400,10 +404,13 @@ const BEvents = () => {
             // Boris will hask if you learnt the tutorial
             VOICES.CXTUTORIALOK.play(function () {
                 // Boris will wait your answer
-                self.goHank(function () {
+                self.goHank(function (response) {
+                    if (_DEBUG) console.log("[boris] next context > " + response.context);
                     // send to server the request with CONTEXT
+                    let nextEvent = response.context;
+                    nextEvent = nextEvent.toUpperCase();
                     // the response will call the next event
-                    // return self.call(response.context)
+                    return self.call(nextEvent)
                 }, true);
             })
         },
@@ -414,10 +421,13 @@ const BEvents = () => {
             // Boris will hask if you like this tempo
             VOICES.CXTEMPO.play(function () {
                 // Boris will wait your answer
-                self.goHank(function () {
+                self.goHank(function (response) {
+                    if (_DEBUG) console.log("[boris] next context > " + response.context);
                     // send to server the request with CONTEXT
+                    let nextEvent = response.context;
+                    nextEvent = nextEvent.toUpperCase();
                     // the response will call the next event
-                    // return self.call(response.context)
+                    return self.call(nextEvent)
                 }, true);
             })
         },
@@ -428,10 +438,13 @@ const BEvents = () => {
             // Boris will hask if you like this feelings
             VOICES.CXFEELINGS.play(function () {
                 // Boris will wait your answer
-                self.goHank(function () {
+                self.goHank(function (response) {
+                    if (_DEBUG) console.log("[boris] next context > " + response.context);
                     // send to server the request with CONTEXT
+                    let nextEvent = response.context;
+                    nextEvent = nextEvent.toUpperCase();
                     // the response will call the next event
-                    // return self.call(response.context)
+                    return self.call(nextEvent)
                 }, true);
             })
         },
@@ -442,10 +455,13 @@ const BEvents = () => {
             // Boris will hask if you like this chords
             VOICES.CXLIKECHORD.play(function () {
                 // Boris will wait your answer
-                self.goHank(function () {
+                self.goHank(function (response) {
+                    if (_DEBUG) console.log("[boris] next context > " + response.context);
                     // send to server the request with CONTEXT
+                    let nextEvent = response.context;
+                    nextEvent = nextEvent.toUpperCase();
                     // the response will call the next event
-                    // return self.call(response.context)
+                    return self.call(nextEvent)
                 }, true);
             })
         },
@@ -456,10 +472,13 @@ const BEvents = () => {
             // Boris will hask to sing
             VOICES.CXTRYSING.play(function () {
                 // Boris will wait your answer
-                self.goHank(function () {
+                self.goHank(function (response) {
+                    if (_DEBUG) console.log("[boris] next context > " + response.context);
                     // send to server the request with CONTEXT
+                    let nextEvent = response.context;
+                    nextEvent = nextEvent.toUpperCase();
                     // the response will call the next event
-                    // return self.call(response.context)
+                    return self.call(nextEvent)
                 }, true);
             })
         },
@@ -469,10 +488,13 @@ const BEvents = () => {
             if (_DEBUG) console.log("[boris] start melody feedback");
             VOICES.CXLIKEMELODY.play(function () {
                 // Boris will ask if your like this melody
-                self.goHank(function () {
+                self.goHank(function (response) {
+                    if (_DEBUG) console.log("[boris] next context > " + response.context);
                     // send to server the request with CONTEXT
+                    let nextEvent = response.context;
+                    nextEvent = nextEvent.toUpperCase();
                     // the response will call the next event
-                    // return self.call(response.context)
+                    return self.call(nextEvent)
                 }, true);
             })
         },
@@ -482,10 +504,13 @@ const BEvents = () => {
             if (_DEBUG) console.log("[boris] start relisten");
             VOICES.CXRELISTENSONG.play(function () {
                 // Boris will ask if you want to listen again the song
-                self.goHank(function () {
+                self.goHank(function (response) {
+                    if (_DEBUG) console.log("[boris] next context > " + response.context);
                     // send to server the request with CONTEXT
+                    let nextEvent = response.context;
+                    nextEvent = nextEvent.toUpperCase();
                     // the response will call the next event
-                    // return self.call(response.context)
+                    return self.call(nextEvent)
                 }, true);
             })
         },
@@ -495,10 +520,13 @@ const BEvents = () => {
             if (_DEBUG) console.log("[boris] start add melody");
             VOICES.CXADDMELODY.play(function () {
                 // Boris will ask if you want to add a new melody
-                self.goHank(function () {
+                self.goHank(function (response) {
+                    if (_DEBUG) console.log("[boris] next context > " + response.context);
                     // send to server the request with CONTEXT
+                    let nextEvent = response.context;
+                    nextEvent = nextEvent.toUpperCase();
                     // the response will call the next event
-                    // return self.call(response.context)
+                    return self.call(nextEvent)
                 }, true);
             })
         },
@@ -508,10 +536,13 @@ const BEvents = () => {
             if (_DEBUG) console.log("[boris] start new song");
             VOICES.CXNEWSONG.play(function () {
                 // Boris will ask if you want to create a new song
-                self.goHank(function () {
+                self.goHank(function (response) {
+                    if (_DEBUG) console.log("[boris] next context > " + response.context);
                     // send to server the request with CONTEXT
+                    let nextEvent = response.context;
+                    nextEvent = nextEvent.toUpperCase();
                     // the response will call the next event
-                    // return self.call(response.context)
+                    return self.call(nextEvent)
                 }, true);
             })
         },
@@ -528,10 +559,13 @@ const BEvents = () => {
             if (_DEBUG) console.log("[boris] start end");
             VOICES.CXEND.play(function () {
                 // Boris will go away
-                self.goHank(function () {
+                self.goHank(function (response) {
+                    if (_DEBUG) console.log("[boris] next context > " + response.context);
                     // send to server the request with CONTEXT
+                    let nextEvent = response.context;
+                    nextEvent = nextEvent.toUpperCase();
                     // the response will call the next event
-                    // return self.call(response.context)
+                    return self.call(nextEvent)
                 }, true);
             })
         }

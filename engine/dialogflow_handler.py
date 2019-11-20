@@ -26,7 +26,7 @@ class BorisDialogFlow:
 
         # Note: hard coding audio_encoding and sample_rate_hertz for simplicity.
         audio_encoding = dialogflow.enums.AudioEncoding.AUDIO_ENCODING_LINEAR_16
-        sample_rate_hertz = 44100
+        sample_rate_hertz = 48000
 
         session = session_client.session_path(self.project_id, self.session_id)
         #print('Session path: {}\n'.format(session))
@@ -69,7 +69,9 @@ class BorisDialogFlow:
         # print('Fulfillment text: {}\n'.format(
         #     response.query_result.fulfillment_text))
 
-        out_context = response.query_result.output_contexts[0].name
-        splitted_context = out_context.split('/')
-
-        return splitted_context[len(splitted_context) - 1] if len(splitted_context) > 0 else None
+        if response.query_result.output_contexts:
+            out_context = response.query_result.output_contexts[0].name
+            splitted_context = out_context.split('/')
+            return splitted_context[len(splitted_context) - 1] if len(splitted_context) > 0 else None
+        else:
+            return 'default fallback intent'

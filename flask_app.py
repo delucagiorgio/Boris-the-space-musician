@@ -126,4 +126,6 @@ def get_response_step():
             response = b.detect_intent_audio(context_short_name=context)
         os.remove(in_file)
 
-        return response
+        return json.dumps({
+            "context": response,
+        })
