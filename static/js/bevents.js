@@ -190,9 +190,6 @@ const BEvents = () => {
         watchDogs,
         speechEvents,
         userStream,
-        setNowContext(input) {
-            nowContext = input;
-        },
         getMajor() {
             return major;
         },
@@ -230,26 +227,30 @@ const BEvents = () => {
             let self = this;
             userStream.then(function (stream) {
                 speechEvents = hark(stream, {
-                    interval : 50,
+                    interval : 90,
                     threshold : -50
                 });
                 if (_DEBUG) console.log("[hark] speech events armed");
+                // start recording input audio
+                self.startStream();
                 // event on speech
                 speechEvents.on('speaking', function(there = self) {
                     if (_DEBUG) console.log('[hark] speaking');
-                    there.gotStream()
                 });
                 // event on stop speech
                 speechEvents.on('stopped_speaking', function(there = self) {
                     if (_DEBUG) console.log('[hark] stopped_speaking');
-                    speechEvents.stop();
-                    there.stopStream(there.nowContext, ajax);
-                    return callback();
+                    // stop recording after ~ milliseconds
+                    setTimeout(function () {
+                        speechEvents.stop();
+                        there.stopStream(there.nowContext, ajax);
+                        return callback();
+                    }, 800)
                 });
 
             })
         },
-        gotStream() {
+        startStream() {
             userStream.then(function (stream) {
                 inputPoint = audioContext.createGain();
                 // Create an AudioNode from the stream.
@@ -369,9 +370,9 @@ const BEvents = () => {
             // log event  description
             if (_DEBUG) console.log("[boris] start");
             // wait for "Boris!" activating command
-            this.goHank(function (there = self) {
-                // play audio file
-                VOICES.CXSTART.play(function (self = there) {
+            this.goHank(function () {
+                // Boris will say "Hello"
+                VOICES.CXSTART.play(function () {
                     if (_DEBUG) console.log("[boris] next event to be launched");
                     self.call(EVNT.CXLEARNTUTORIAL)
                 });
@@ -382,14 +383,14 @@ const BEvents = () => {
             // log event  description
             if (_DEBUG) console.log("start learn tutorial");
             // Boris will hask if you want to learn the tutorial
-            VOICES.CXLEARNTUTORIAL.play(function (there = self) {
+            VOICES.CXLEARNTUTORIAL.play(function () {
                 // Boris will wait your answer
-                there.goHank(function (there = self) {
+                self.goHank(function () {
                     // send to server the request with CONTEXT
                     // the response will call the next event
                     // return self.call(response.context)
 
-                });
+                }, true);
             })
         },
         cxTutorialOk(){
@@ -397,121 +398,141 @@ const BEvents = () => {
             // log event  description
             if (_DEBUG) console.log("[boris] start tutorial feedback");
             // Boris will hask if you learnt the tutorial
-            VOICES.CXTUTORIALOK.play(function (there = self) {
+            VOICES.CXTUTORIALOK.play(function () {
                 // Boris will wait your answer
-                there.goHank(function (there = self) {
+                self.goHank(function () {
                     // send to server the request with CONTEXT
                     // the response will call the next event
                     // return self.call(response.context)
-                });
+                }, true);
             })
         },
         cxTempo(){
+            let self = this;
+            // log event  description
             if (_DEBUG) console.log("[boris] start tempo");
             // Boris will hask if you like this tempo
-            VOICES.CXTEMPO.play(function (there = self) {
+            VOICES.CXTEMPO.play(function () {
                 // Boris will wait your answer
-                there.goHank(function (there = self) {
+                self.goHank(function () {
                     // send to server the request with CONTEXT
                     // the response will call the next event
                     // return self.call(response.context)
-                });
+                }, true);
             })
         },
         cxFeelings(){
+            let self = this;
+            // log event  description
             if (_DEBUG) console.log("[boris] start feelings");
             // Boris will hask if you like this feelings
-            VOICES.CXFEELINGS.play(function (there = self) {
+            VOICES.CXFEELINGS.play(function () {
                 // Boris will wait your answer
-                there.goHank(function (there = self) {
+                self.goHank(function () {
                     // send to server the request with CONTEXT
                     // the response will call the next event
                     // return self.call(response.context)
-                });
+                }, true);
             })
         },
         cxLikeChord(){
+            let self = this;
+            // log event  description
             if (_DEBUG) console.log("[boris] start chord feedback");
             // Boris will hask if you like this chords
-            VOICES.CXLIKECHORD.play(function (there = self) {
+            VOICES.CXLIKECHORD.play(function () {
                 // Boris will wait your answer
-                there.goHank(function (there = self) {
+                self.goHank(function () {
                     // send to server the request with CONTEXT
                     // the response will call the next event
                     // return self.call(response.context)
-                });
+                }, true);
             })
         },
         cxTrySing(){
+            let self = this;
+            // log event  description
             if (_DEBUG) console.log("[boris] start sing");
             // Boris will hask to sing
-            VOICES.CXTRYSING.play(function (there = self) {
+            VOICES.CXTRYSING.play(function () {
                 // Boris will wait your answer
-                there.goHank(function (there = self) {
+                self.goHank(function () {
                     // send to server the request with CONTEXT
                     // the response will call the next event
                     // return self.call(response.context)
-                });
+                }, true);
             })
         },
         cxLikeMelody(){
+            let self = this;
+            // log event  description
             if (_DEBUG) console.log("[boris] start melody feedback");
-            VOICES.CXLIKEMELODY.play(function (there = self) {
+            VOICES.CXLIKEMELODY.play(function () {
                 // Boris will ask if your like this melody
-                there.goHank(function (there = self) {
+                self.goHank(function () {
                     // send to server the request with CONTEXT
                     // the response will call the next event
                     // return self.call(response.context)
-                });
+                }, true);
             })
         },
         cxRelistenSong(){
+            let self = this;
+            // log event  description
             if (_DEBUG) console.log("[boris] start relisten");
-            VOICES.CXRELISTENSONG.play(function (there = self) {
+            VOICES.CXRELISTENSONG.play(function () {
                 // Boris will ask if you want to listen again the song
-                there.goHank(function (there = self) {
+                self.goHank(function () {
                     // send to server the request with CONTEXT
                     // the response will call the next event
                     // return self.call(response.context)
-                });
+                }, true);
             })
         },
         cxAddMelody(){
+            let self = this;
+            // log event  description
             if (_DEBUG) console.log("[boris] start add melody");
-            VOICES.CXADDMELODY.play(function (there = self) {
+            VOICES.CXADDMELODY.play(function () {
                 // Boris will ask if you want to add a new melody
-                there.goHank(function (there = self) {
+                self.goHank(function () {
                     // send to server the request with CONTEXT
                     // the response will call the next event
                     // return self.call(response.context)
-                });
+                }, true);
             })
         },
         cxNewSong(){
+            let self = this;
+            // log event  description
             if (_DEBUG) console.log("[boris] start new song");
-            VOICES.CXNEWSONG.play(function (there = self) {
+            VOICES.CXNEWSONG.play(function () {
                 // Boris will ask if you want to create a new song
-                there.goHank(function (there = self) {
+                self.goHank(function () {
                     // send to server the request with CONTEXT
                     // the response will call the next event
                     // return self.call(response.context)
-                });
+                }, true);
             })
         },
         cxRestart(){
+            let self = this;
+            // log event  description
             if (_DEBUG) console.log("[boris] start restart");
             // Boris will restart a new start from choosing tempo
             this.call(EVNT.CXTEMPO)
         },
         cxEnd(){
+            let self = this;
+            // log event  description
             if (_DEBUG) console.log("[boris] start end");
-            VOICES.CXEND.play(function (there = self) {
+            VOICES.CXEND.play(function () {
                 // Boris will go away
-                there.goHank(function (there = self) {
+                self.goHank(function () {
                     // send to server the request with CONTEXT
                     // the response will call the next event
                     // return self.call(response.context)
-                });
+                }, true);
             })
         }
     }
