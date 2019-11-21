@@ -19,13 +19,13 @@ let melodyTone = new Tone.PolySynth({
 
 $(document).ready(function () {
     // generate random chords
-    getChords(true);
+    // getChords(true);
     // connect synth to master out
     melodyTone.chain(new Tone.Volume(-20), Tone.Master);
     chordsTone.chain(new Tone.Volume(-22), Tone.Master);
 });
 
-let getMelody = blob => {
+getMelody = blob => {
     $.ajax({
         url: '/get_melody',
         dataType: 'json',
@@ -45,7 +45,27 @@ let getMelody = blob => {
     });
 };
 
-let getChords = (major = true) => {
+getChroma = (blob, callback) => {
+    $.ajax({
+        url: '/get_chroma',
+        dataType: 'json',
+        type: 'post',
+        data: {
+            "blob": blob
+        },
+        success: function(data) {
+            readBlob(data, melodyTone).then(function(part) {
+                melodyPartTemp = part;
+                callback();
+            });
+        },
+        error: function(e) {
+            console.log(e)
+        },
+    });
+};
+
+getChords = (major = true) => {
     clearMelody();
     clearChords();
     $.ajax({
@@ -80,7 +100,7 @@ const dataURItoBlob = dataURI => {
     return new Blob([ab], {type: mimeString});
 };
 
-const readPart = (data, synth) => {
+readPart = (data, synth) => {
     // reader to convert midi blob
     const temp = new FileReader();
     let part;
@@ -114,7 +134,7 @@ const readPart = (data, synth) => {
     });
 };
 
-readBlob = (data, synth) => {
+const readBlob = (data, synth) => {
     // reset synth clock
     stopNote();
     // get response
@@ -123,12 +143,13 @@ readBlob = (data, synth) => {
     return readPart(dataURItoBlob(blob), synth)
 };
 
-playNote = (withMelody = true) => {
-    // stop playing
-    stopNote();
+playNote = (withMelody = true, withChords = true) => {
     // set mute on melody
+    console.log(melodyPartTemp);
     melodyPartTemp.mute = !withMelody;
     melodyPart.mute = !withMelody;
+    // set mute on chords
+    chordsPart.mute = !withChords;
     // start playing
     Tone.Transport.start();
 };
@@ -190,3 +211,9 @@ addMelody = () => {
     }
     melodyPartTemp.removeAll();
 };
+
+//trigger the callback when the Transport reaches the desired time
+Tone.Transport.schedule(function(){
+    console.log("stopping note");
+    stopNote()
+}, "3s");

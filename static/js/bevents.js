@@ -8,10 +8,10 @@ const EVNT = {
     CXLIKECHORD: "CX_LIKE_CHORD",
     CXTRYSING: "CX_TRY_SING",
     CXLIKEMELODY: "CX_LIKE_MELODY",
+    CXPLAY: "CX_PLAY",
     CXRELISTENSONG: "CX_RELISTEN_SONG",
     CXADDMELODY: "CX_ADD_MELODY",
     CXNEWSONG: "CX_NEW_SONG",
-    CXRESTART: "CX_RESTART",
     CXEND: "CX_END",
 };
 
@@ -132,18 +132,21 @@ let VOICES = {
 };
 
 const BEvents = () => {
-    // client
-    let commit = { melody: false, chord: false };
-    let major = undefined;
     // audio
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioContext = new AudioContext();
     let audioInput = null;
     let realAudioInput = null;
     let inputPoint = null;
-    let nowContext = EVNT.CXSTART;
+    let currentContext = EVNT.CXSTART;
+    let lastContext = null;
     let audioRecorder = null;
     let bufferSize = 2048;
+    let tempo = 120;
+    let blobMelody = null;
+    let stpMelody = false;
+    let stpChords = false;
+    let stpMajor  = true;
     let mono = true;
     let watchDogs = null;
     let speechEvents = null;
@@ -186,44 +189,34 @@ const BEvents = () => {
         inputPoint,
         realAudioInput,
         mono,
-        nowContext,
+        tempo,
+        stpMelody,
+        stpChords,
+        stpMajor,
+        currentContext,
+        lastContext,
         watchDogs,
         speechEvents,
         userStream,
-        getMajor() {
-            return major;
-        },
-        setMajor(input) {
-            major = (input !== undefined)
-        },
-        getCommit() {
-            return commit;
-        },
-        setCommitMelody(input) {
-            commit.melody = (input !== undefined)
-        },
-        setCommitChord(input) {
-            commit.chord = (input !== undefined)
-        },
-        goWatchDogs(callback) {
-            userStream.then(function (stream) {
-                watchDogs = hark(stream, {
-                    interval : 50,
-                    threshold : -50
-                });
-                if (_DEBUG) console.log("[watchdogs] speech events armed");
-                // event on speech
-                watchDogs.on('speaking', function() {
-                    if (_DEBUG) console.log('[watchdogs] speaking');
-                });
-                // event on stop speech
-                watchDogs.on('stopped_speaking', function() {
-                    if (_DEBUG) console.log('[watchdogs] stopped_speaking');
-                    return callback();
-                });
-            })
-        },
-        goHank(callback, ajax = true) {
+        // listnWatchDogs(callback) {
+        //     userStream.then(function (stream) {
+        //         watchDogs = hark(stream, {
+        //             interval : 50,
+        //             threshold : -50
+        //         });
+        //         if (_DEBUG) console.log("[watchdogs] speech events armed");
+        //         // event on speech
+        //         watchDogs.on('speaking', function() {
+        //             if (_DEBUG) console.log('[watchdogs] speaking');
+        //         });
+        //         // event on stop speech
+        //         watchDogs.on('stopped_speaking', function() {
+        //             if (_DEBUG) console.log('[watchdogs] stopped_speaking');
+        //             return callback();
+        //         });
+        //     })
+        // },
+        listnHank(callback, ajax = true) {
             let self = this;
             userStream.then(function (stream) {
                 speechEvents = hark(stream, {
@@ -240,11 +233,9 @@ const BEvents = () => {
                 // event on stop speech
                 speechEvents.on('stopped_speaking', function() {
                     if (_DEBUG) console.log('[hark] stopped_speaking');
-                    // stop recording after ~ milliseconds
-                    setTimeout(function () {
-                        speechEvents.stop();
-                        self.stopStream(self.nowContext, ajax, callback);
-                    }, 800)
+                    // stop recording
+                    speechEvents.stop();
+                    self.stopStream(self.currentContext, ajax, callback);
                 });
 
             })
@@ -277,7 +268,9 @@ const BEvents = () => {
             audioRecorder.exportWAV(function (blob) {
                 // export blob to base64
                 convertBlobToBase64(blob).then(function(base64) {
+                    // callback will receive nextcontext
                     if (ajax) {
+                        if (_DEBUG) console.log("[dialogflow] request context:" + inputContext);
                         $.ajax({
                             url: '/get_response_step',
                             dataType: 'json',
@@ -287,8 +280,10 @@ const BEvents = () => {
                                 "blob": base64
                             },
                             success: function(data) {
-                                if (_DEBUG) console.log("[server] response success")
-                                callback(data)
+                                if (_DEBUG) console.log("[server] response success");
+                                if (_DEBUG) console.log("[boris] next context > " + data.context);
+                                // send to server the request with CONTEXT
+                                callback(data.context.toUpperCase())
                             },
                             error: function(e) {
                                 if (_DEBUG) {
@@ -298,72 +293,86 @@ const BEvents = () => {
                             },
                         });
                     } else {
-                        callback();
+                        // callback will receive base64 of recordings
+                        callback(base64);
                     }
                 });
             });
         },
         call(input) {
-            if (watchDogs === null) {
-                this.goWatchDogs(function () {
-                    if (_DEBUG) console.log("[watchdogs] watchdogs never sleep")
-                });
-            }
+            // if (watchDogs === null) {
+            //     this.listnWatchDogs(function () {
+            //         if (_DEBUG) console.log("[watchdogs] watchdogs never sleep")
+            //     });
+            // }
             switch (input) {
                 case EVNT.CXSTART:
-                    this.nowContext = EVNT.CXSTART;
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXSTART;
                     this.cxStart();
                     break;
                 case EVNT.CXLEARNTUTORIAL:
-                    this.nowContext = EVNT.CXLEARNTUTORIAL;
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXLEARNTUTORIAL;
                     this.cxLearnTutorial() ;
                     break;
                 case EVNT.CXTUTORIALOK:
-                    this.nowContext = EVNT.CXTUTORIALOK;
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXTUTORIALOK;
                     this.cxTutorialOk();
                     break;
                 case EVNT.CXTEMPO:
-                    this.nowContext = EVNT.CXTEMPO;
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXTEMPO;
                     this.cxTempo();
                     break;
                 case EVNT.CXFEELINGS:
-                    this.nowContext = EVNT.CXFEELINGS;
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXFEELINGS;
                     this.cxFeelings();
                     break;
                 case EVNT.CXLIKECHORD:
-                    this.nowContext = EVNT.CXLIKECHORD;
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXLIKECHORD;
                     this.cxLikeChord();
                     break;
                 case EVNT.CXTRYSING:
-                    this.nowContext = EVNT.CXTRYSING;
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXTRYSING;
                     this.cxTrySing();
                     break;
                 case EVNT.CXLIKEMELODY:
-                    this.nowContext = EVNT.CXLIKEMELODY;
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXLIKEMELODY;
                     this.cxLikeMelody();
                     break;
                 case EVNT.CXRELISTENSONG:
-                    this.nowContext = EVNT.CXRELISTENSONG;
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXRELISTENSONG;
                     this.cxRelistenSong();
                     break;
                 case EVNT.CXADDMELODY:
-                    this.nowContext = EVNT.CXADDMELODY;
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXADDMELODY;
                     this.cxAddMelody();
                     break;
+                case EVNT.CXPLAY:
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXPLAY;
+                    this.cxPlay();
+                    break;
                 case EVNT.CXNEWSONG:
-                    this.nowContext = EVNT.CXNEWSONG;
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXNEWSONG;
                     this.cxNewSong();
                     break;
-                case EVNT.CXRESTART:
-                    this.nowContext = EVNT.CXRESTART;
-                    this.cxRestart();
-                    break;
                 case EVNT.CXEND:
-                    this.nowContext = EVNT.CXEND;
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXEND;
                     this.cxEnd();
                     break;
                 default:
-                    this.call(this.nowContext);
+                    this.call(this.currentContext);
                     break;
             }
         },
@@ -371,8 +380,10 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start");
+            // get predefined chords
+            getChords(stpMajor);
             // wait for "Boris!" activating command
-            this.goHank(function () {
+            this.listnHank(function () {
                 // Boris will say "Hello"
                 VOICES.CXSTART.play(function () {
                     if (_DEBUG) console.log("[boris] next event to be launched");
@@ -387,12 +398,7 @@ const BEvents = () => {
             // Boris will hask if you want to learn the tutorial
             VOICES.CXLEARNTUTORIAL.play(function () {
                 // Boris will wait your answer
-                self.goHank(function (response) {
-                    if (_DEBUG) console.log("[boris] next context > " + response.context);
-                    // send to server the request with CONTEXT
-                    let nextEvent = response.context;
-                    nextEvent = nextEvent.toUpperCase();
-                    // the response will call the next event
+                self.listnHank(function (nextEvent) {
                     return self.call(nextEvent)
                 }, true);
             })
@@ -404,11 +410,7 @@ const BEvents = () => {
             // Boris will hask if you learnt the tutorial
             VOICES.CXTUTORIALOK.play(function () {
                 // Boris will wait your answer
-                self.goHank(function (response) {
-                    if (_DEBUG) console.log("[boris] next context > " + response.context);
-                    // send to server the request with CONTEXT
-                    let nextEvent = response.context;
-                    nextEvent = nextEvent.toUpperCase();
+                self.listnHank(function (nextEvent) {
                     // the response will call the next event
                     return self.call(nextEvent)
                 }, true);
@@ -421,11 +423,7 @@ const BEvents = () => {
             // Boris will hask if you like this tempo
             VOICES.CXTEMPO.play(function () {
                 // Boris will wait your answer
-                self.goHank(function (response) {
-                    if (_DEBUG) console.log("[boris] next context > " + response.context);
-                    // send to server the request with CONTEXT
-                    let nextEvent = response.context;
-                    nextEvent = nextEvent.toUpperCase();
+                self.listnHank(function (nextEvent) {
                     // the response will call the next event
                     return self.call(nextEvent)
                 }, true);
@@ -435,17 +433,34 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start feelings");
+            // if we are here melody is done
+            stpMelody = true;
             // Boris will hask if you like this feelings
             VOICES.CXFEELINGS.play(function () {
                 // Boris will wait your answer
-                self.goHank(function (response) {
-                    if (_DEBUG) console.log("[boris] next context > " + response.context);
-                    // send to server the request with CONTEXT
-                    let nextEvent = response.context;
-                    nextEvent = nextEvent.toUpperCase();
+                self.listnHank(function (nextEvent) {
+                    // TODO: check how to manage stpMajor:fellings
+                    // generate new chords respect the answer
+                    getChords(stpMajor);
                     // the response will call the next event
                     return self.call(nextEvent)
                 }, true);
+            })
+        },
+        cxPlay(){
+            let self = this;
+            // log event  description
+            if (_DEBUG) console.log("[boris] start playing music");
+            getMelody(blobMelody)
+            // commit temp part into final
+            addMelody();
+            // Boris will play your song
+            playNote(true, true);
+            // Once is finished
+            Tone.Transport.once('stop', function () {
+                if (_DEBUG) console.log("[music] song stopped");
+                // Boris will ask if user want to relisten
+                return self.call(EVNT.CXRELISTENSONG);
             })
         },
         cxLikeChord(){
@@ -454,15 +469,18 @@ const BEvents = () => {
             if (_DEBUG) console.log("[boris] start chord feedback");
             // Boris will hask if you like this chords
             VOICES.CXLIKECHORD.play(function () {
-                // Boris will wait your answer
-                self.goHank(function (response) {
-                    if (_DEBUG) console.log("[boris] next context > " + response.context);
-                    // send to server the request with CONTEXT
-                    let nextEvent = response.context;
-                    nextEvent = nextEvent.toUpperCase();
-                    // the response will call the next event
-                    return self.call(nextEvent)
-                }, true);
+                // Boris will play the chords
+                playNote(false, true);
+                // Once chords are played
+                Tone.Transport.once('stop', function () {
+                    if (_DEBUG) console.log("[music] song stopped");
+                    // Boris will ask if your like these chords
+                    self.listnHank(function (nextEvent) {
+                        // the response will call the next event
+                        return self.call(nextEvent)
+                    }, true);
+                })
+
             })
         },
         cxTrySing(){
@@ -472,14 +490,15 @@ const BEvents = () => {
             // Boris will hask to sing
             VOICES.CXTRYSING.play(function () {
                 // Boris will wait your answer
-                self.goHank(function (response) {
-                    if (_DEBUG) console.log("[boris] next context > " + response.context);
-                    // send to server the request with CONTEXT
-                    let nextEvent = response.context;
-                    nextEvent = nextEvent.toUpperCase();
-                    // the response will call the next event
-                    return self.call(nextEvent)
-                }, true);
+                self.listnHank(function (base64) {
+                    // save blob sing
+                    blobMelody = base64;
+                    // generate the melody
+                    getChroma(base64, function () {
+                        // the response will call the next event
+                        return self.call(EVNT.CXLIKEMELODY)
+                    });
+                }, false);
             })
         },
         cxLikeMelody(){
@@ -487,16 +506,22 @@ const BEvents = () => {
             // log event  description
             if (_DEBUG) console.log("[boris] start melody feedback");
             VOICES.CXLIKEMELODY.play(function () {
-                // Boris will ask if your like this melody
-                self.goHank(function (response) {
-                    if (_DEBUG) console.log("[boris] next context > " + response.context);
-                    // send to server the request with CONTEXT
-                    let nextEvent = response.context;
-                    nextEvent = nextEvent.toUpperCase();
-                    // the response will call the next event
-                    return self.call(nextEvent)
-                }, true);
-            })
+                // Boris will play the melody
+                playNote(true, false);
+                // Once melody is finished
+                Tone.Transport.once('stop', function () {
+                    if (_DEBUG) console.log("[music] song stopped");
+                    // Boris will ask if your like this melody
+                    self.listnHank(function (nextEvent) {
+                        // if chords are already done play song
+                        if (stpChords) {
+                            return self.call(EVNT.CXPLAY)
+                        } else {
+                            return self.call(nextEvent)
+                        }
+                    }, true);
+                });
+            });
         },
         cxRelistenSong(){
             let self = this;
@@ -504,11 +529,7 @@ const BEvents = () => {
             if (_DEBUG) console.log("[boris] start relisten");
             VOICES.CXRELISTENSONG.play(function () {
                 // Boris will ask if you want to listen again the song
-                self.goHank(function (response) {
-                    if (_DEBUG) console.log("[boris] next context > " + response.context);
-                    // send to server the request with CONTEXT
-                    let nextEvent = response.context;
-                    nextEvent = nextEvent.toUpperCase();
+                self.listnHank(function (nextEvent) {
                     // the response will call the next event
                     return self.call(nextEvent)
                 }, true);
@@ -520,11 +541,7 @@ const BEvents = () => {
             if (_DEBUG) console.log("[boris] start add melody");
             VOICES.CXADDMELODY.play(function () {
                 // Boris will ask if you want to add a new melody
-                self.goHank(function (response) {
-                    if (_DEBUG) console.log("[boris] next context > " + response.context);
-                    // send to server the request with CONTEXT
-                    let nextEvent = response.context;
-                    nextEvent = nextEvent.toUpperCase();
+                self.listnHank(function (nextEvent) {
                     // the response will call the next event
                     return self.call(nextEvent)
                 }, true);
@@ -536,22 +553,11 @@ const BEvents = () => {
             if (_DEBUG) console.log("[boris] start new song");
             VOICES.CXNEWSONG.play(function () {
                 // Boris will ask if you want to create a new song
-                self.goHank(function (response) {
-                    if (_DEBUG) console.log("[boris] next context > " + response.context);
-                    // send to server the request with CONTEXT
-                    let nextEvent = response.context;
-                    nextEvent = nextEvent.toUpperCase();
+                self.listnHank(function (nextEvent) {
                     // the response will call the next event
                     return self.call(nextEvent)
                 }, true);
             })
-        },
-        cxRestart(){
-            let self = this;
-            // log event  description
-            if (_DEBUG) console.log("[boris] start restart");
-            // Boris will restart a new start from choosing tempo
-            this.call(EVNT.CXTEMPO)
         },
         cxEnd(){
             let self = this;
@@ -559,18 +565,10 @@ const BEvents = () => {
             if (_DEBUG) console.log("[boris] start end");
             VOICES.CXEND.play(function () {
                 // Boris will go away
-                self.goHank(function (response) {
-                    if (_DEBUG) console.log("[boris] next context > " + response.context);
-                    // send to server the request with CONTEXT
-                    let nextEvent = response.context;
-                    nextEvent = nextEvent.toUpperCase();
-                    // the response will call the next event
-                    return self.call(nextEvent)
-                }, true);
             })
         }
     }
 };
 
 let xx = BEvents();
-xx.call(EVNT.CXSTART);
+xx.call(EVNT.CXTRYSING);

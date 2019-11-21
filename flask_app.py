@@ -99,6 +99,40 @@ def get_melody():
         os.remove(out_file)
         return results
 
+@app.route("/get_chroma", methods=["POST"])
+def get_chroma():
+    if request.method == "POST":
+        # decode audio file
+        file_content = request.values.get("blob")
+        # remove base64 header
+        file_content = file_content[22:]
+        # convert from base64 to bytecodes
+        bytecodes = base64.b64decode(file_content)
+        # create hash code
+        hash_object = hashlib.sha256(bytecodes)
+        hex_dig = hash_object.hexdigest()
+        # generate temp file with hash to prevent conflict
+        in_file = 'in/' + hex_dig + '.wav'
+        out_file = 'in/' + hex_dig + '.mid'
+        # create file
+        with open(in_file, 'wb') as f:
+            f.write(bytecodes)
+            f.close()
+
+            b = Chroma(path_audio=in_file, path_midi=out_file, tempo=120)
+            b.run()
+
+        os.remove(in_file)
+
+        with open(out_file, "rb") as f:
+            results = json.dumps({
+                "title": hex_dig,
+                "blob": base64.b64encode(f.read()).decode('ascii')
+            })
+
+        os.remove(out_file)
+        return results
+
 
 @app.route("/get_response_step", methods=["POST"])
 def get_response_step():
