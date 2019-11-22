@@ -20,12 +20,55 @@
     <script src="/static/js/bevents.js"></script>
 
     <style>
+        @keyframes fade-in {
+            0% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        @keyframes fade-out {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+        @keyframes planet-rotation {
+            0% {
+                transform: rotateZ(0deg);
+            }
+            100% {
+                transform:  rotateZ(-360deg);
+            }
+        }
+        @keyframes system-rotation {
+            0% {
+                transform: rotateZ(0deg)
+            }
+            100% {
+                transform: rotateZ(360deg)
+            }
+        }
         @keyframes move-background {
             from {
                 transform: translateY(calc(-11930px + 100vh));
             }
             to {
                 transform: translateY(0);
+            }
+        }
+        @keyframes move-boris {
+            from {
+                transform: translateY(40px) rotateX(5deg);
+            }
+            to {
+                transform: translateY(-40px) rotateX(-5deg);
             }
         }
         html {
@@ -47,13 +90,99 @@
         #save, #save img { height: 10vh; }
         #save { opacity: 0.25;}
         #save[download] { opacity: 1;}
+        #solar-system {
+            right: 40%;
+            width: 1840px;
+            top: 150vh;
+            animation: system-rotation 10s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+            animation-direction: normal;
+            transform-origin: top right;
+            z-index: -1;
+            position: absolute;
+        }
+        .planet {
+            position: relative;
+            left: 0;
+            top: 0;
+        }
+        #planet-1 {
+            margin-bottom: 40vh;
+            margin-right: -5vh;
+            animation: planet-rotation 10s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+            animation-direction: normal;
+        }
+        #planet-2 {
+            margin-bottom: 50vh;
+            animation: planet-rotation 10s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+            animation-direction: normal;
+        }
+        #planet-3 {
+            margin-bottom: 25vh;
+            animation: planet-rotation 10s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+            animation-direction: normal;
+        }
         #boris-char {
             width: 125px;
             height: 211px;
+            position: relative;
+            background: url(/static/img/astronauta1.png);
+            margin: auto;
+            margin-right: 30%;
+            margin-top: 40vh;
+            animation-name: move-boris;
+            animation-duration: 6s;
+            animation-timing-function: revert;
+            animation-iteration-count: infinite;
+            animation-direction: alternate-reverse;
+        }
+        #boris-title {
+            width: 648px;
+            height: 132px;
             position: absolute;
-            top: 30%;
-            right: 30%;
-            background: url("/static/img/astronauta1.png");
+            background: url(/static/img/logo.png);
+            margin: auto;
+            right:0;
+            left: 0;
+            bottom: 44vh;
+            background-size: contain;
+            background-repeat: no-repeat;
+            opacity: 0;
+            animation: fade-in 6s;
+            animation-fill-mode: forwards;
+            animation-delay: 1s;
+        }
+        #text-bkg {
+            font-size: 24px;
+            color: white;
+            width: 709px;
+            height: 286px;
+            position: absolute;
+            background: url(/static/img/schermo-orizzontale.png);
+            margin: auto;
+            opacity: 0.6;
+            right: 3vh;
+            top: 68vh;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+        #text-bkg > div {
+            position: relative;
+            margin-top: 48px;
+            margin-left: 37px;
+            height: 180px;
+            width: 636px;
+        }
+        #text-bkg div p {
+            height: inherit;
+            overflow: auto;
         }
         #content-bkg {
             height: 11930px;
@@ -69,11 +198,117 @@
             bottom: 0;
             z-index: -1;
             background: url("/static/img/sfondo.png");
-            background-position:bottom;
-            animation-name: move-background;
-            animation-duration: 6s;
-            animation-timing-function: cubic-bezier(0.65, 0.05, 0.36, 1);
-            animation-iteration-count: 1;
+            background-position: bottom;
+            opacity: 0;
+            transform: translateY(calc(-11930px + 100vh));
+            /*animation: move-background 6s, fade-in 5s;*/
+            animation: move-background 0s, fade-in 0s; /* TODO: remove in production */
+            animation-fill-mode: forwards, forwards;
+            animation-timing-function: cubic-bezier(0.65, 0.05, 0.36, 1), cubic-bezier(1, 0.4, 0.81, 0.71);
+            animation-iteration-count: 1, 1;
+            /*animation-delay: 6s, 0s;*/
+
+        }
+        #check-list {
+            position: absolute;
+            top: 50px;
+            left: 50px;
+        }
+        #list-point {
+            display: inline-flex;
+            list-style: none;
+            position: absolute;
+            top: 30px;
+        }
+        .checkpoint {
+        }
+        ol#list-point > li {
+            position: relative;
+            height: 40px;
+            width: 40px;
+            margin: 26px;
+        }
+        ol#list-point > li::before {
+            content: "";
+            width: 30px;
+            height: 47px;
+            border-bottom: 2px solid white;
+            position: absolute;
+            bottom: 50%;
+            left: -40px;
+        }
+        ol#list-point > li div {
+            width: inherit;
+            height: inherit;
+        }
+        #check1 {
+            background: url("/static/img/icone/Risorsa 10.png");
+            background-size: contain;
+        }
+        #check1.active {
+            background: url("/static/img/icone/Risorsa 18.png");
+            background-size: contain;
+
+        }
+        #check2 {
+            background: url("/static/img/icone/Risorsa 12.png");
+            background-size: contain;
+        }
+        #check2.active {
+            background: url("/static/img/icone/Risorsa 19.png");
+            background-size: contain;
+
+        }
+        #check3 {
+            background: url("/static/img/icone/Risorsa 13.png");
+            background-size: contain;
+        }
+        #check3.active {
+            background: url("/static/img/icone/Risorsa 20.png");
+            background-size: contain;
+
+        }
+        #check4 {
+            background: url("/static/img/icone/Risorsa 14.png");
+            background-size: contain;
+        }
+        #check4.active {
+            background: url("/static/img/icone/Risorsa 21.png");
+            background-size: contain;
+
+        }
+        #check5 {
+            background: url("/static/img/icone/Risorsa 15.png");
+            background-size: contain;
+        }
+        #check5.active {
+            background: url("/static/img/icone/Risorsa 22.png");
+            background-size: contain;
+
+        }
+        #check6 {
+            background: url("/static/img/icone/Risorsa 16.png");
+            background-size: contain;
+        }
+        #check6.active {
+            background: url("/static/img/icone/Risorsa 23.png");
+            background-size: contain;
+
+        }
+        #check7 {
+            background: url("/static/img/icone/Risorsa 17.png");
+            background-size: contain;
+        }
+        #check7 .active {
+            width: 120px;
+            height: 307px;
+        }
+        #botis-title-vertical {
+            width: 120px;
+            height: 307px;
+            background: url("/static/img/logo-verticale.png");
+            background-size: contain;
+            background-repeat: no-repeat;
         }
         @media (orientation: landscape) {
             body { flex-direction: row;}
@@ -82,13 +317,35 @@
     </style>
 </head>
 <body>
-<div id="content-bkg">Foreground content
-    <div class="background"></div>
-</div>
-<div id="content-itf">Foreground content
-    <div class="interface">
+<div id="content-bkg">
+    <div class="background">
+        <div id="check-list">
+            <div id="botis-title-vertical"></div>
+            <ol id="list-point">
+                <li><div class="checkpoint active" id="check1"></div></li>
+                <li><div class="checkpoint active" id="check2"></div></li>
+                <li><div class="checkpoint" id="check3"></div></li>
+                <li><div class="checkpoint" id="check4"></div></li>
+                <li><div class="checkpoint" id="check5"></div></li>
+                <li><div class="checkpoint" id="check6"></div></li>
+                <li><div class="checkpoint" id="check7"></div></li>
+            </ol>
+        </div>
         <div id="boris-char"></div>
+        <div id="text-bkg">
+            <div>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas porta nunc sit amet dui lacinia luctus ut at leo. Pellentesque ipsum neque, placerat sit amet euismod quis, consectetur et erat. Suspendisse bibendum blandit nisl et fringilla. In sapien lectus, semper vel urna nec, elementum rhoncus dolor. Morbi aliquet eros suscipit gravida venenatis. Vestibulum urna ipsum, condimentum ac ornare ut, lobortis eget nulla. Donec euismod lorem ac consectetur porta. Pellentesque pellentesque est eu orci efficitur, ac molestie enim consequat.</p>
+            </div>
+        </div>
+        <div id="boris-title"></div>
+        <div id="solar-system">
+            <img class="planet" id="planet-1" src="/static/img/Pianeta-blu.png" alt="pianeta"/>
+            <img class="planet" id="planet-2" src="/static/img/pianeta-arancio.png" alt="pianeta"/>
+            <img class="planet" id="planet-3" src="/static/img/pianeta-marrone.png" alt="pianeta"/>
+        </div>
     </div>
+
+
 </div>
 
 <div id="controls">
