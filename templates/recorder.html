@@ -20,22 +20,20 @@
     <script src="/static/js/bevents.js"></script>
 
     <style>
-        html { overflow: hidden; }
+        @keyframes move-background {
+            from {
+                transform: translateY(calc(-11930px + 100vh));
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+        html {
+            overflow: hidden;
+        }
         body {
             font: 14pt Arial, sans-serif;
-            background: lightgrey;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            width: 100%;
-            margin: 0 0;
-        }
-        canvas {
-            display: inline-block;
-            background: #202020;
-            width: 95%;
-            height: 45%;
-            box-shadow: 0px 0px 10px blue;
+            margin: 0;
         }
         #controls {
             display: flex;
@@ -49,25 +47,50 @@
         #save, #save img { height: 10vh; }
         #save { opacity: 0.25;}
         #save[download] { opacity: 1;}
-        #viz {
-            height: 80%;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            align-items: center;
+        #boris-char {
+            width: 125px;
+            height: 211px;
+            position: absolute;
+            top: 30%;
+            right: 30%;
+            background: url("/static/img/astronauta1.png");
+        }
+        #content-bkg {
+            height: 11930px;
+            text-align: center;
+            color: #000;
+            position:relative;
+        }
+        .background{
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            z-index: -1;
+            background: url("/static/img/sfondo.png");
+            background-position:bottom;
+            animation-name: move-background;
+            animation-duration: 6s;
+            animation-timing-function: cubic-bezier(0.65, 0.05, 0.36, 1);
+            animation-iteration-count: 1;
         }
         @media (orientation: landscape) {
             body { flex-direction: row;}
             #controls { flex-direction: column; height: 100%; width: 10%;}
-            #viz { height: 100%; width: 90%;}
         }
     </style>
 </head>
 <body>
-<div id="viz">
-    <canvas id="wavedisplay" width="1024" height="500"></canvas>
+<div id="content-bkg">Foreground content
+    <div class="background"></div>
 </div>
+<div id="content-itf">Foreground content
+    <div class="interface">
+        <div id="boris-char"></div>
+    </div>
+</div>
+
 <div id="controls">
     <p id="record" onclick="toggleRecording(this);">Record</p>
     <p id="play" onclick="playNote();">Play</p>

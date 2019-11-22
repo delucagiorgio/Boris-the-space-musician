@@ -145,7 +145,6 @@ const readBlob = (data, synth) => {
 
 playNote = (withMelody = true, withChords = true) => {
     // set mute on melody
-    console.log(melodyPartTemp);
     melodyPartTemp.mute = !withMelody;
     melodyPart.mute = !withMelody;
     // set mute on chords
@@ -155,7 +154,6 @@ playNote = (withMelody = true, withChords = true) => {
 };
 
 stopNote = () => {
-    Tone.Transport.clear();
     Tone.Transport.stop();
 };
 
@@ -211,9 +209,3 @@ addMelody = () => {
     }
     melodyPartTemp.removeAll();
 };
-
-//trigger the callback when the Transport reaches the desired time
-Tone.Transport.schedule(function(){
-    console.log("stopping note");
-    stopNote()
-}, "3s");

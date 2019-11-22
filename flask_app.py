@@ -113,7 +113,7 @@ def get_chroma():
         hex_dig = hash_object.hexdigest()
         # generate temp file with hash to prevent conflict
         in_file = 'in/' + hex_dig + '.wav'
-        out_file = 'in/' + hex_dig + '.mid'
+        out_file = 'in/' + hex_dig
         # create file
         with open(in_file, 'wb') as f:
             f.write(bytecodes)

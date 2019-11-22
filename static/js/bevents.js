@@ -5,13 +5,14 @@ const EVNT = {
     CXTUTORIALOK: "CX_TUTORIAL_OK",
     CXTEMPO: "CX_TEMPO",
     CXFEELINGS: "CX_FEELINGS",
-    CXLIKECHORD: "CX_LIKE_CHORD",
+    CXLIKECHORDS: "CX_LIKE_CHORDS",
     CXTRYSING: "CX_TRY_SING",
     CXLIKEMELODY: "CX_LIKE_MELODY",
     CXPLAY: "CX_PLAY",
     CXRELISTENSONG: "CX_RELISTEN_SONG",
     CXADDMELODY: "CX_ADD_MELODY",
     CXNEWSONG: "CX_NEW_SONG",
+    CXRESTART: "CX_RESTART",
     CXEND: "CX_END",
 };
 
@@ -105,8 +106,8 @@ let VOICES = {
     CXFEELINGS : Voice({
         name: EVNT.CXFEELINGS,
         path:"/static/audio/boris/FEELINGS.wav"}),
-    CXLIKECHORD : Voice({
-        name: EVNT.CXLIKECHORD,
+    CXLIKECHORDS : Voice({
+        name: EVNT.CXLIKECHORDS,
         path:"/static/audio/boris/LIKE_CHORD.wav"}),
     CXTRYSING : Voice({
         name: EVNT.CXTRYSING,
@@ -125,31 +126,36 @@ let VOICES = {
         path:"/static/audio/boris/NEW_SONG.wav"}),
     CXRESTART : Voice({
         name: EVNT.CXRESTART,
-        path:"/static/audio/boris/RESTART.wav"}),
+        path:"/static/audio/boris/END.wav"}),
     CXEND : Voice({
         name: EVNT.CXEND,
         path:"/static/audio/boris/END.wav"}),
 };
 
 const BEvents = () => {
-    // audio
+    // recordings
     window.AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioContext = new AudioContext();
     let audioInput = null;
     let realAudioInput = null;
     let inputPoint = null;
-    let currentContext = EVNT.CXSTART;
-    let lastContext = null;
     let audioRecorder = null;
     let bufferSize = 2048;
+    let mono = true;
+    // listener
+    let watchDogs = null;
+    let speechEvents = null;
+    // midi
     let tempo = 120;
+    let tempoLength = 0;
     let blobMelody = null;
     let stpMelody = false;
     let stpChords = false;
-    let stpMajor  = true;
-    let mono = true;
-    let watchDogs = null;
-    let speechEvents = null;
+    let stpMajor  = false;
+    // context
+    let lastContext = null;
+    let currentContext = EVNT.CXSTART;
+
     let userStream = new Promise((resolve, reject) => {
         try {
             if (!navigator.getUserMedia)
@@ -198,6 +204,7 @@ const BEvents = () => {
         watchDogs,
         speechEvents,
         userStream,
+        tempoLength,
         // listnWatchDogs(callback) {
         //     userStream.then(function (stream) {
         //         watchDogs = hark(stream, {
@@ -299,6 +306,37 @@ const BEvents = () => {
                 });
             });
         },
+        scheduleEndPlay(context) {
+            let usability;
+            // melodyPartTemp[0], chordsPart[1], melodyPart[2]
+            let lenPie = [0,0,0];
+            if (melodyPartTemp.length !== 0) {
+                usability = melodyPartTemp._events[melodyPartTemp._events.length - 1];
+                lenPie[0] = usability.value.time + usability.value.duration;
+            }
+            if (chordsPart.length !== 0) {
+                usability = chordsPart._events[chordsPart._events.length - 1];
+                lenPie[1] = usability.value.time + usability.value.duration;
+            }
+            if (melodyPart.length !== 0) {
+                usability = melodyPart._events[melodyPart._events.length - 1];
+                lenPie[2] = usability.value.time + usability.value.duration;
+            }
+            // Update song duration
+            if (context === EVNT.CXLIKEMELODY) {
+                tempoLength = lenPie[0];
+            } else if (context === EVNT.CXLIKECHORDS) {
+                tempoLength = lenPie[1];
+            } else {
+                tempoLength = Math.max(lenPie[1], lenPie[2]);
+            }
+            tempoLength = tempoLength + 2;
+            //trigger the callback when the Transport reaches the desired time
+            Tone.Transport.scheduleOnce(function(){
+                if (_DEBUG)console.log("[tonejs:schedule] stop music after " + tempoLength);
+                stopNote();
+            }, tempoLength);
+        },
         call(input) {
             // if (watchDogs === null) {
             //     this.listnWatchDogs(function () {
@@ -331,10 +369,10 @@ const BEvents = () => {
                     this.currentContext = EVNT.CXFEELINGS;
                     this.cxFeelings();
                     break;
-                case EVNT.CXLIKECHORD:
+                case EVNT.CXLIKECHORDS:
                     this.lastContext = this.currentContext;
-                    this.currentContext = EVNT.CXLIKECHORD;
-                    this.cxLikeChord();
+                    this.currentContext = EVNT.CXLIKECHORDS;
+                    this.cxLikeChords();
                     break;
                 case EVNT.CXTRYSING:
                     this.lastContext = this.currentContext;
@@ -365,6 +403,11 @@ const BEvents = () => {
                     this.lastContext = this.currentContext;
                     this.currentContext = EVNT.CXNEWSONG;
                     this.cxNewSong();
+                    break;
+                case EVNT.CXRESTART:
+                    this.lastContext = this.currentContext;
+                    this.currentContext = EVNT.CXRESTART;
+                    this.cxEnd();
                     break;
                 case EVNT.CXEND:
                     this.lastContext = this.currentContext;
@@ -435,11 +478,12 @@ const BEvents = () => {
             if (_DEBUG) console.log("[boris] start feelings");
             // if we are here melody is done
             stpMelody = true;
+            // check stpMajor
+            stpMajor = !stpMajor;
             // Boris will hask if you like this feelings
             VOICES.CXFEELINGS.play(function () {
                 // Boris will wait your answer
                 self.listnHank(function (nextEvent) {
-                    // TODO: check how to manage stpMajor:fellings
                     // generate new chords respect the answer
                     getChords(stpMajor);
                     // the response will call the next event
@@ -451,9 +495,15 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start playing music");
-            getMelody(blobMelody)
+            // if we are here chords are done
+            stpChords = true;
             // commit temp part into final
-            addMelody();
+            if (melodyPartTemp.length > 0) {
+                getMelody(blobMelody);
+                addMelody();
+            }
+            // schedule the stop
+            this.scheduleEndPlay(currentContext);
             // Boris will play your song
             playNote(true, true);
             // Once is finished
@@ -463,12 +513,14 @@ const BEvents = () => {
                 return self.call(EVNT.CXRELISTENSONG);
             })
         },
-        cxLikeChord(){
+        cxLikeChords(){
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start chord feedback");
             // Boris will hask if you like this chords
-            VOICES.CXLIKECHORD.play(function () {
+            VOICES.CXLIKECHORDS.play(function () {
+                // schedule the stop
+                self.scheduleEndPlay(self.currentContext);
                 // Boris will play the chords
                 playNote(false, true);
                 // Once chords are played
@@ -506,6 +558,8 @@ const BEvents = () => {
             // log event  description
             if (_DEBUG) console.log("[boris] start melody feedback");
             VOICES.CXLIKEMELODY.play(function () {
+                // schedule the stop
+                self.scheduleEndPlay(self.currentContext);
                 // Boris will play the melody
                 playNote(true, false);
                 // Once melody is finished
@@ -557,6 +611,15 @@ const BEvents = () => {
                     // the response will call the next event
                     return self.call(nextEvent)
                 }, true);
+            })
+        },
+        cxRestart(){
+            let self = this;
+            // log event  description
+            if (_DEBUG) console.log("[boris] restart");
+            VOICES.CXRESTART.play(function () {
+                // Boris will go away
+                return self.call(EVNT.CXTEMPO);
             })
         },
         cxEnd(){
