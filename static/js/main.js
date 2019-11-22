@@ -1,21 +1,15 @@
 let chordsTitle;
 let chordsMidi;
 let chordsPart = new Tone.Part();
-let chordsTone = new Tone.PolySynth({
-    polyphony : 16,
-    volume : 0 ,
-    detune : 0 ,
-    voice : Tone.Synth
-});
+let chordsTone = SampleLibrary.load({
+            minify: true,
+            instruments: "piano"});
 
 let melodyPartTemp = new Tone.Part();
 let melodyPart = new Tone.Part();
-let melodyTone = new Tone.PolySynth({
-    polyphony : 16,
-    volume : 0 ,
-    detune : 0 ,
-    voice : Tone.Synth
-});
+let melodyTone = SampleLibrary.load({
+            minify: true,
+            instruments: "trumpet"});
 
 $(document).ready(function () {
     // generate random chords

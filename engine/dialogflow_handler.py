@@ -59,8 +59,6 @@ class BorisDialogFlow:
             session=session, query_input=query_input,
             input_audio=input_audio, query_params=query_params)
 
-        # os.remove(self.audio_file)
-
         # print('=' * 20)
         # print('Query text: {}'.format(response.query_result.query_text))
         # print('Detected intent: {} (confidence: {})\n'.format(

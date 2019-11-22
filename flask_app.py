@@ -3,6 +3,7 @@ import hashlib
 import os
 import json
 import random as rnd
+from os import path
 
 from flask import Flask, redirect, render_template, request, url_for
 from pretty_midi import PrettyMIDI
@@ -158,7 +159,9 @@ def get_response_step():
 
             b = BorisDialogFlow(audio_file=in_file)
             response = b.detect_intent_audio(context_short_name=context)
-        os.remove(in_file)
+
+        if path.exists(in_file):
+            os.remove(in_file)
 
         return json.dumps({
             "context": response,
