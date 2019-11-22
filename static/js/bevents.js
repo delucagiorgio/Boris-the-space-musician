@@ -309,6 +309,7 @@ const BEvents = () => {
         scheduleEndPlay(context) {
             let usability;
             // melodyPartTemp[0], chordsPart[1], melodyPart[2]
+
             let lenPie = [0,0,0];
             if (melodyPartTemp.length !== 0) {
                 usability = melodyPartTemp._events[melodyPartTemp._events.length - 1];
@@ -322,14 +323,17 @@ const BEvents = () => {
                 usability = melodyPart._events[melodyPart._events.length - 1];
                 lenPie[2] = usability.value.time + usability.value.duration;
             }
+            console.log(lenPie)
             // Update song duration
             if (context === EVNT.CXLIKEMELODY) {
                 tempoLength = lenPie[0];
             } else if (context === EVNT.CXLIKECHORDS) {
                 tempoLength = lenPie[1];
             } else {
+                console.log("DEFAULT case:" , lenPie[1], lenPie[2])
                 tempoLength = Math.max(lenPie[1], lenPie[2]);
             }
+            console.log(tempoLength)
             tempoLength = tempoLength + 2;
             //trigger the callback when the Transport reaches the desired time
             Tone.Transport.scheduleOnce(function(){
@@ -338,6 +342,7 @@ const BEvents = () => {
             }, tempoLength);
         },
         call(input) {
+            console.log("Calling event ", input)
             // if (watchDogs === null) {
             //     this.listnWatchDogs(function () {
             //         if (_DEBUG) console.log("[watchdogs] watchdogs never sleep")
@@ -424,7 +429,6 @@ const BEvents = () => {
             // log event  description
             if (_DEBUG) console.log("[boris] start");
             // get predefined chords
-            getChords(stpMajor);
             // wait for "Boris!" activating command
             this.listnHank(function () {
                 // Boris will say "Hello"
@@ -503,9 +507,9 @@ const BEvents = () => {
                 addMelody();
             }
             // schedule the stop
-            this.scheduleEndPlay(currentContext);
+            self.scheduleEndPlay(self.currentContext);
             // Boris will play your song
-            playNote(true, true);
+            playNote(true, true, false);
             // Once is finished
             Tone.Transport.once('stop', function () {
                 if (_DEBUG) console.log("[music] song stopped");
@@ -517,12 +521,13 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start chord feedback");
+
             // Boris will hask if you like this chords
             VOICES.CXLIKECHORDS.play(function () {
                 // schedule the stop
                 self.scheduleEndPlay(self.currentContext);
                 // Boris will play the chords
-                playNote(false, true);
+                playNote(false, true, false);
                 // Once chords are played
                 Tone.Transport.once('stop', function () {
                     if (_DEBUG) console.log("[music] song stopped");
@@ -561,14 +566,15 @@ const BEvents = () => {
                 // schedule the stop
                 self.scheduleEndPlay(self.currentContext);
                 // Boris will play the melody
-                playNote(true, false);
+                playNote(false, false,true);
                 // Once melody is finished
                 Tone.Transport.once('stop', function () {
                     if (_DEBUG) console.log("[music] song stopped");
                     // Boris will ask if your like this melody
                     self.listnHank(function (nextEvent) {
                         // if chords are already done play song
-                        if (stpChords) {
+                        console.log(self.lastContext !== nextEvent, self.lastContext, nextEvent)
+                        if (self.lastContext !== nextEvent && stpChords) {
                             return self.call(EVNT.CXPLAY)
                         } else {
                             return self.call(nextEvent)

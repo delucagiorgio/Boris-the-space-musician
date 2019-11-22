@@ -7,6 +7,7 @@ let chordsTone = SampleLibrary.load({
 
 let melodyPartTemp = new Tone.Part();
 let melodyPart = new Tone.Part();
+let newMelodyPart = new Tone.Part();
 let melodyTone = SampleLibrary.load({
             minify: true,
             instruments: "trumpet"});
@@ -19,7 +20,8 @@ $(document).ready(function () {
     chordsTone.chain(new Tone.Volume(-22), Tone.Master);
 });
 
-getMelody = blob => {
+getMelody =  blob  => {
+    clearNewMelodyPart();
     $.ajax({
         url: '/get_melody',
         dataType: 'json',
@@ -30,7 +32,7 @@ getMelody = blob => {
         },
         success: function(data) {
             readBlob(data, melodyTone).then(function(part) {
-                melodyPartTemp = part;
+                newMelodyPart = part;
             });
         },
         error: function(e) {
@@ -40,6 +42,7 @@ getMelody = blob => {
 };
 
 getChroma = (blob, callback) => {
+
     $.ajax({
         url: '/get_chroma',
         dataType: 'json',
@@ -60,7 +63,6 @@ getChroma = (blob, callback) => {
 };
 
 getChords = (major = true) => {
-    clearMelody();
     clearChords();
     $.ajax({
         url: '/get_chords',
@@ -130,16 +132,16 @@ readPart = (data, synth) => {
 
 const readBlob = (data, synth) => {
     // reset synth clock
-    stopNote();
+    //stopNote();
     // get response
     let blob = "data:audio/midi;base64," + data.blob;
     // trigger the note
     return readPart(dataURItoBlob(blob), synth)
 };
 
-playNote = (withMelody = true, withChords = true) => {
+playNote = (withMelody = true, withChords = true, withTempMelody = true) => {
     // set mute on melody
-    melodyPartTemp.mute = !withMelody;
+    melodyPartTemp.mute = !withTempMelody;
     melodyPart.mute = !withMelody;
     // set mute on chords
     chordsPart.mute = !withChords;
@@ -151,19 +153,22 @@ stopNote = () => {
     Tone.Transport.stop();
 };
 
-clearMelody = () => {
-    melodyPartTemp.removeAll();
-    melodyPart.removeAll();
+clearMelodyPartTemp = () => {
+    melodyPartTemp = melodyPartTemp.removeAll();
+};
+
+clearNewMelodyPart = () => {
+    newMelodyPart = newMelodyPart.removeAll();
 };
 
 clearChords = () => {
-    chordsPart.removeAll();
+    chordsPart = chordsPart.removeAll();
 };
 
 
 addMelody = () => {
     let notes = [];
-    let melodyNotesLength = melodyPart._events.length;
+    let melodyNotesLength = newMelodyPart._events.length;
 
     if (melodyNotesLength > 0) {
         // we are append
@@ -172,7 +177,7 @@ addMelody = () => {
         melodyPart._events.forEach(note => {
             notes.push(note.value)
         });
-        melodyPartTemp._events.forEach(note => {
+        newMelodyPart._events.forEach(note => {
             let newNote = note.value;
             newNote.time = newNote.time + startNote;
             notes.push(newNote)
@@ -188,7 +193,7 @@ addMelody = () => {
         }, notes).start(0);
     } else {
         // we are init
-        melodyPartTemp._events.forEach(note => {
+        newMelodyPart._events.forEach(note => {
             notes.push(note.value)
         });
 
@@ -201,5 +206,5 @@ addMelody = () => {
             );
         }, notes).start(0);
     }
-    melodyPartTemp.removeAll();
+    newMelodyPart.removeAll();
 };
