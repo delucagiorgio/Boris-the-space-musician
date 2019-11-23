@@ -25,6 +25,7 @@ const convertBlobToBase64 = blob => new Promise((resolve, reject) => {
     reader.readAsDataURL(blob);
 });
 
+
 const Voice = (state) => {
     let name = state.name;
     let path = state.path;
@@ -323,17 +324,14 @@ const BEvents = () => {
                 usability = melodyPart._events[melodyPart._events.length - 1];
                 lenPie[2] = usability.value.time + usability.value.duration;
             }
-            console.log(lenPie)
             // Update song duration
             if (context === EVNT.CXLIKEMELODY) {
                 tempoLength = lenPie[0];
             } else if (context === EVNT.CXLIKECHORDS) {
                 tempoLength = lenPie[1];
             } else {
-                console.log("DEFAULT case:" , lenPie[1], lenPie[2])
                 tempoLength = Math.max(lenPie[1], lenPie[2]);
             }
-            console.log(tempoLength)
             tempoLength = tempoLength + 2;
             //trigger the callback when the Transport reaches the desired time
             Tone.Transport.scheduleOnce(function(){
@@ -342,7 +340,7 @@ const BEvents = () => {
             }, tempoLength);
         },
         call(input) {
-            console.log("Calling event ", input)
+            if (_DEBUG) console.log("[event] Calling event ", input);
             // if (watchDogs === null) {
             //     this.listnWatchDogs(function () {
             //         if (_DEBUG) console.log("[watchdogs] watchdogs never sleep")
@@ -424,11 +422,33 @@ const BEvents = () => {
                     break;
             }
         },
+        focusOnBoris(active = true) {
+            let id = "#focus";
+            if (active) {
+                if (_DEBUG) console.log("[front] focus active on boris");
+                $(id).addClass('active');
+            } else {
+                // remove focus on boris
+                if (_DEBUG) console.log("[front] remove focus on boris");
+                $(id).removeClass('active');
+            }
+        },
+        activeCheck(start = 1) {
+            let id = "#check";
+            for (let i = 1; i < 9; i++) {
+                if (i <= start) {
+                    $(id+i).addClass('active')
+                } else  {
+                    $(id+i).removeClass('active')
+                }
+            }
+        },
         cxStart(){
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start");
-            // get predefined chords
+            // activate checkpoint
+            this.activeCheck(1);
             // wait for "Boris!" activating command
             this.listnHank(function () {
                 // Boris will say "Hello"
@@ -441,11 +461,16 @@ const BEvents = () => {
         cxLearnTutorial() {
             let self = this;
             // log event  description
-            if (_DEBUG) console.log("start learn tutorial");
+            if (_DEBUG) console.log("[boris] start learn tutorial");
+            // focus on boris
+            this.focusOnBoris(true);
             // Boris will hask if you want to learn the tutorial
             VOICES.CXLEARNTUTORIAL.play(function () {
                 // Boris will wait your answer
                 self.listnHank(function (nextEvent) {
+                    // remove focus on boris
+                    self.focusOnBoris(false);
+                    // the response will call the next event
                     return self.call(nextEvent)
                 }, true);
             })
@@ -467,8 +492,14 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start tempo");
+            // activate checkpoint
+            this.activeCheck(2);
+            // focus on boris
+            this.focusOnBoris(true);
             // Boris will hask if you like this tempo
             VOICES.CXTEMPO.play(function () {
+                // remove focus on boris
+                self.focusOnBoris(false);
                 // Boris will wait your answer
                 self.listnHank(function (nextEvent) {
                     // the response will call the next event
@@ -480,12 +511,18 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start feelings");
+            // activate checkpoint
+            this.activeCheck(4);
+            // focus on boris
+            this.focusOnBoris(true);
             // if we are here melody is done
             stpMelody = true;
             // check stpMajor
             stpMajor = !stpMajor;
             // Boris will hask if you like this feelings
             VOICES.CXFEELINGS.play(function () {
+                // focus on boris
+                self.focusOnBoris(false);
                 // Boris will wait your answer
                 self.listnHank(function (nextEvent) {
                     // generate new chords respect the answer
@@ -499,6 +536,8 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start playing music");
+            // activate checkpoint
+            this.activeCheck(6);
             // if we are here chords are done
             stpChords = true;
             // commit temp part into final
@@ -508,22 +547,32 @@ const BEvents = () => {
             }
             // schedule the stop
             self.scheduleEndPlay(self.currentContext);
-            // Boris will play your song
-            playNote(true, true, false);
-            // Once is finished
-            Tone.Transport.once('stop', function () {
-                if (_DEBUG) console.log("[music] song stopped");
-                // Boris will ask if user want to relisten
-                return self.call(EVNT.CXRELISTENSONG);
-            })
+            // Boris will congrats with you
+            VOICES.CXFEELINGS.play(function () {
+                // Boris will play your song
+                playNote(true, true, false);
+                // activate checkpoint
+                self.activeCheck(7);
+                // Once is finished
+                Tone.Transport.once('stop', function () {
+                    if (_DEBUG) console.log("[music] song stopped");
+                    // Boris will ask if user want to relisten
+                    return self.call(EVNT.CXRELISTENSONG);
+                })
+            });
         },
         cxLikeChords(){
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start chord feedback");
-
+            // activate checkpoint
+            this.activeCheck(5);
+            // focus on boris
+            this.focusOnBoris(true);
             // Boris will hask if you like this chords
             VOICES.CXLIKECHORDS.play(function () {
+                // focus on boris
+                self.focusOnBoris(false);
                 // schedule the stop
                 self.scheduleEndPlay(self.currentContext);
                 // Boris will play the chords
@@ -544,8 +593,14 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start sing");
+            // activate checkpoint
+            this.activeCheck(3);
+            // focus on boris
+            this.focusOnBoris(true);
             // Boris will hask to sing
             VOICES.CXTRYSING.play(function () {
+                // focus on boris
+                self.focusOnBoris(false);
                 // Boris will wait your answer
                 self.listnHank(function (base64) {
                     // save blob sing
@@ -562,7 +617,11 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start melody feedback");
+            // focus on boris
+            this.focusOnBoris(true);
             VOICES.CXLIKEMELODY.play(function () {
+                // focus on boris
+                self.focusOnBoris(false);
                 // schedule the stop
                 self.scheduleEndPlay(self.currentContext);
                 // Boris will play the melody
@@ -573,7 +632,6 @@ const BEvents = () => {
                     // Boris will ask if your like this melody
                     self.listnHank(function (nextEvent) {
                         // if chords are already done play song
-                        console.log(self.lastContext !== nextEvent, self.lastContext, nextEvent)
                         if (self.lastContext !== nextEvent && stpChords) {
                             return self.call(EVNT.CXPLAY)
                         } else {
@@ -587,7 +645,11 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start relisten");
+            // focus on boris
+            this.focusOnBoris(true);
             VOICES.CXRELISTENSONG.play(function () {
+                // focus on boris
+                self.focusOnBoris(false);
                 // Boris will ask if you want to listen again the song
                 self.listnHank(function (nextEvent) {
                     // the response will call the next event
@@ -599,7 +661,11 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start add melody");
+            // focus on boris
+            this.focusOnBoris(true);
             VOICES.CXADDMELODY.play(function () {
+                // focus on boris
+                self.focusOnBoris(false);
                 // Boris will ask if you want to add a new melody
                 self.listnHank(function (nextEvent) {
                     // the response will call the next event
@@ -611,7 +677,11 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start new song");
+            // focus on boris
+            this.focusOnBoris(true);
             VOICES.CXNEWSONG.play(function () {
+                // focus on boris
+                self.focusOnBoris(false);
                 // Boris will ask if you want to create a new song
                 self.listnHank(function (nextEvent) {
                     // the response will call the next event
@@ -623,7 +693,11 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] restart");
+            // focus on boris
+            this.focusOnBoris(true);
             VOICES.CXRESTART.play(function () {
+                // focus on boris
+                self.focusOnBoris(false);
                 // Boris will go away
                 return self.call(EVNT.CXTEMPO);
             })
@@ -632,12 +706,11 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start end");
+            // focus on boris
+            this.focusOnBoris(true);
             VOICES.CXEND.play(function () {
                 // Boris will go away
             })
         }
     }
 };
-
-let xx = BEvents();
-xx.call(EVNT.CXTRYSING);

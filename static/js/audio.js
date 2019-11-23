@@ -1,97 +1,202 @@
-/* Copyright 2013 Chris Wilson
+let chordsTitle;
+let chordsMidi;
+let chordsPart = new Tone.Part();
+let chordsTone = SampleLibrary.load({
+    minify: true,
+    instruments: "piano"});
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+let melodyPartTemp = new Tone.Part();
+let melodyPart = new Tone.Part();
+let newMelodyPart = new Tone.Part();
+let melodyTone = SampleLibrary.load({
+    minify: true,
+    instruments: "trumpet"});
 
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-window.AudioContext = window.AudioContext || window.webkitAudioContext;
-let audioContext = new AudioContext();
-let audioInput = null;
-let realAudioInput = null;
-let inputPoint = null;
-let audioRecorder = null;
-let bufferSize = 2048;
-let mono = true;
-
-
-function toggleRecording( e ) {
-    if (e.classList.contains("recording")) {
-        // stop recording
-        e.classList.remove("recording");
-        stopNote();
-        audioRecorder.stop();
-        // export wav to blob
-        audioRecorder.exportWAV(function (blob) {
-            // export blob to base64
-            convertBlobToBase64(blob).then(function(base64) {
-                return getMelody(base64);
+getMelody =  blob  => {
+    clearNewMelodyPart();
+    $.ajax({
+        url: '/get_melody',
+        dataType: 'json',
+        type: 'post',
+        data: {
+            "title": chordsTitle,
+            "blob": blob
+        },
+        success: function(data) {
+            readBlob(data, melodyTone).then(function(part) {
+                newMelodyPart = part;
             });
-        });
-    } else {
-        // start recording
-        e.classList.add("recording");
-        if (!audioRecorder)
-            return;
-        audioRecorder.clear();
-        audioRecorder.record();
-    }
-}
-
-function gotStream(stream) {
-    inputPoint = audioContext.createGain();
-
-    // Create an AudioNode from the stream.
-    realAudioInput = audioContext.createMediaStreamSource(stream);
-    audioInput = realAudioInput;
-    audioInput.connect(inputPoint);
-
-    analyserNode = audioContext.createAnalyser();
-    analyserNode.fftSize = bufferSize;
-    inputPoint.connect(analyserNode);
-
-    audioRecorder = new Recorder(inputPoint, {
-        bufferLen: bufferSize,
-        numChannels: (mono) ? 1 : 2,
-        mimeType: 'audio/wav'
+        },
+        error: function(e) {
+            console.log(e)
+        },
     });
+};
 
-    zeroGain = audioContext.createGain();
-    zeroGain.gain.value = 0.0;
-    inputPoint.connect( zeroGain );
-    zeroGain.connect(audioContext.destination);
-}
+getChroma = (blob, callback) => {
 
-function initAudio() {
-    if (!navigator.getUserMedia)
-        navigator.getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-    if (!navigator.cancelAnimationFrame)
-        navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame;
-    if (!navigator.requestAnimationFrame)
-        navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
+    $.ajax({
+        url: '/get_chroma',
+        dataType: 'json',
+        type: 'post',
+        data: {
+            "blob": blob
+        },
+        success: function(data) {
+            readBlob(data, melodyTone).then(function(part) {
+                melodyPartTemp = part;
+                callback();
+            });
+        },
+        error: function(e) {
+            console.log(e)
+        },
+    });
+};
 
-    navigator.getUserMedia(
-        {
-            "audio": {
-                "mandatory": {
-                    "googEchoCancellation": "false",
-                    "googAutoGainControl": "false",
-                    "googNoiseSuppression": "false",
-                    "googHighpassFilter": "false"
-                },
-                "optional": []
-            },
-        }, gotStream, function(e) {
-            alert('Error getting audio');
-            console.log(e);
+getChords = (major = true) => {
+    clearChords();
+    $.ajax({
+        url: '/get_chords',
+        dataType: 'json',
+        type: 'get',
+        data: {
+            "major": major
+        },
+        success: function(data) {
+            readBlob(data, chordsTone).then(function(part) {
+                chordsPart = part;
+                chordsTitle = data.title;
+                chordsMidi =  data.blob;
+            });
+        },
+        error: function(e) {
+            console.log(e)
+        },
+    });
+};
+
+const dataURItoBlob = dataURI => {
+    const byteString = atob(dataURI.split(',')[1]);
+    const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+
+    let ab = new ArrayBuffer(byteString.length);
+    let ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ab], {type: mimeString});
+};
+
+readPart = (data, synth) => {
+    // reader to convert midi blob
+    const temp = new FileReader();
+    let part;
+
+    return new Promise((resolve, reject) => {
+        temp.onerror = () => {
+            temp.abort();
+            reject(new DOMException("Problem parsing input file."));
+        };
+
+        temp.onload = () => {
+            // convert blob to tonejs format readable
+            const midiChords = MidiConvert.parse(temp.result);
+            // set clock params
+            Tone.Transport.bpm.value = midiChords.bpm;
+            Tone.Transport.timeSignature = midiChords.timeSignature;
+            // trigger each note
+            midiChords.tracks.forEach(track => {
+                part = new Tone.Part((time, note) => {
+                    synth.triggerAttackRelease(
+                        note.name,
+                        note.duration,
+                        time,
+                        note.velocity
+                    );
+                }, track.notes).start(midiChords.startTime);
+            });
+            resolve(part);
+        };
+        temp.readAsArrayBuffer(data);
+    });
+};
+
+const readBlob = (data, synth) => {
+    // reset synth clock
+    //stopNote();
+    // get response
+    let blob = "data:audio/midi;base64," + data.blob;
+    // trigger the note
+    return readPart(dataURItoBlob(blob), synth)
+};
+
+playNote = (withMelody = true, withChords = true, withTempMelody = true) => {
+    // set mute on melody
+    melodyPartTemp.mute = !withTempMelody;
+    melodyPart.mute = !withMelody;
+    // set mute on chords
+    chordsPart.mute = !withChords;
+    // start playing
+    Tone.Transport.start();
+};
+
+stopNote = () => {
+    Tone.Transport.stop();
+};
+
+clearMelodyPartTemp = () => {
+    melodyPartTemp = melodyPartTemp.removeAll();
+};
+
+clearNewMelodyPart = () => {
+    newMelodyPart = newMelodyPart.removeAll();
+};
+
+clearChords = () => {
+    chordsPart = chordsPart.removeAll();
+};
+
+
+addMelody = () => {
+    let notes = [];
+    let melodyNotesLength = newMelodyPart._events.length;
+
+    if (melodyNotesLength > 0) {
+        // we are append
+        let startNote = melodyPart.loopEnd;
+
+        melodyPart._events.forEach(note => {
+            notes.push(note.value)
         });
-}
+        newMelodyPart._events.forEach(note => {
+            let newNote = note.value;
+            newNote.time = newNote.time + startNote;
+            notes.push(newNote)
+        });
 
-window.addEventListener('load', initAudio );
+        melodyPart = new Tone.Part((time, note) => {
+            melodyTone.triggerAttackRelease(
+                note.name,
+                note.duration,
+                time,
+                note.velocity
+            );
+        }, notes).start(0);
+    } else {
+        // we are init
+        newMelodyPart._events.forEach(note => {
+            notes.push(note.value)
+        });
+
+        melodyPart = new Tone.Part((time, note) => {
+            melodyTone.triggerAttackRelease(
+                note.name,
+                note.duration,
+                time,
+                note.velocity
+            );
+        }, notes).start(0);
+    }
+    newMelodyPart.removeAll();
+};

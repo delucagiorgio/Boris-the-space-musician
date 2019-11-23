@@ -18,9 +18,9 @@
     <script src="/static/js/lib/jquery-3.4.1.min.js"></script>
     <script src="/static/js/lib/ToneInstrument.js"></script>
     <script src="/static/js/audio.js"></script>
-    <script src="/static/js/main.js"></script>
     <script src="/static/js/lib/hark.js"></script>
     <script src="/static/js/bevents.js"></script>
+    <script src="/static/js/main.js"></script>
 
 
     <style>
@@ -69,10 +69,18 @@
         }
         @keyframes move-boris {
             from {
-                transform: translateY(40px) rotateX(5deg);
+                transform: translateY(20px) rotateX(5deg);
             }
             to {
-                transform: translateY(-40px) rotateX(-5deg);
+                transform: translateY(-20px) rotateX(-5deg);
+            }
+        }
+        @keyframes move-stars {
+            from {
+                transform: translateX(-1120px);
+            }
+            to {
+                transform: translateX(1120px);
             }
         }
         html {
@@ -133,19 +141,44 @@
             animation-timing-function: linear;
             animation-direction: normal;
         }
+        #focus-on-char {
+            position: absolute;
+            width: 100%;
+            height: 200%;
+            animation-name: move-boris;
+            animation-duration: 6s;
+            animation-iteration-count: infinite;
+            animation-direction: alternate-reverse;
+        }
+        #focus {
+            position: absolute;
+            top: -2600px;
+            left: -2650px;
+            width: 5420px;
+            height: 5420px;
+            animation: move-focus 1s ease 1;
+            animation-fill-mode: forwards;
+            transition: all 1s ease-in;
+            transform: scale(8.5);
+            opacity: 0;
+            background: -moz-radial-gradient(transparent 140px, rgba(0,0,0,1) 150px);
+            background: -webkit-radial-gradient(transparent 140px, rgba(0, 0, 0, 0.66) 150px);
+            background: -ms-radial-gradient(transparent 140px, rgba(0,0,0,1) 150px);
+            background: -o-radial-gradient(transparent 140px, rgba(0,0,0,1) 150px);
+            pointer-events: none;
+        }
+        #focus.active {
+            opacity: 1;
+            transform: scale(1);
+        }
         #boris-char {
             width: 125px;
             height: 211px;
-            position: relative;
+            position: absolute;
             background: url(/static/img/astronauta1.png);
             margin: auto;
-            margin-right: 30%;
-            margin-top: 40vh;
-            animation-name: move-boris;
-            animation-duration: 6s;
-            animation-timing-function: revert;
-            animation-iteration-count: infinite;
-            animation-direction: alternate-reverse;
+            left: 47%;
+            top: 1.6%;
         }
         #boris-title {
             width: 648px;
@@ -194,14 +227,33 @@
             color: #000;
             position:relative;
         }
-        .background{
+        #stars{
+            position: absolute;
+            left: -4000px;
+            top: 0;
+            width: 8000px;
+            height: 4500px;
+            z-index: 0;
+            background: url(/static/img/stelle.png);
+            background-position: center;
+            background-size: contain;
+            opacity: 1;
+            transform: translateX(-1120px);
+            animation: move-stars 60s;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            animation-direction: alternate-reverse;
+
+            /* animation-delay: 6s, 0s;*/
+        }
+        #background{
             position: absolute;
             left: 0;
             right: 0;
             top: 0;
             bottom: 0;
             z-index: -1;
-            background: url("/static/img/sfondo.png");
+            background: url("/static/img/sfondo-05.png");
             background-position: bottom;
             opacity: 0;
             transform: translateY(calc(-11930px + 100vh));
@@ -211,7 +263,6 @@
             animation-timing-function: cubic-bezier(0.65, 0.05, 0.36, 1), cubic-bezier(1, 0.4, 0.81, 0.71);
             animation-iteration-count: 1, 1;
             /*animation-delay: 6s, 0s;*/
-
         }
         #check-list {
             position: absolute;
@@ -255,7 +306,7 @@
 
         }
         #check2 {
-            background: url("/static/img/icone/Risorsa 12.png");
+            background: url("/static/img/icone/Risorsa 11.png");
             background-size: contain;
         }
         #check2.active {
@@ -264,11 +315,20 @@
 
         }
         #check3 {
-            background: url("/static/img/icone/Risorsa 13.png");
+            background: url("/static/img/icone/Risorsa 12.png");
             background-size: contain;
         }
         #check3.active {
             background: url("/static/img/icone/Risorsa 20.png");
+            background-size: contain;
+
+        }
+        #check5 {
+            background: url("/static/img/icone/Risorsa 13.png");
+            background-size: contain;
+        }
+        #check5.active {
+            background: url("/static/img/icone/Risorsa 21.png");
             background-size: contain;
 
         }
@@ -277,21 +337,12 @@
             background-size: contain;
         }
         #check4.active {
-            background: url("/static/img/icone/Risorsa 21.png");
-            background-size: contain;
-
-        }
-        #check5 {
-            background: url("/static/img/icone/Risorsa 15.png");
-            background-size: contain;
-        }
-        #check5.active {
             background: url("/static/img/icone/Risorsa 22.png");
             background-size: contain;
 
         }
         #check6 {
-            background: url("/static/img/icone/Risorsa 16.png");
+            background: url("/static/img/icone/Risorsa 15.png");
             background-size: contain;
         }
         #check6.active {
@@ -300,12 +351,21 @@
 
         }
         #check7 {
+            background: url("/static/img/icone/Risorsa 16.png");
+            background-size: contain;
+        }
+        #check7.active {
+            background: url("/static/img/icone/Risorsa 24.png");
+            background-size: contain;
+
+        }
+        #check8 {
             background: url("/static/img/icone/Risorsa 17.png");
             background-size: contain;
         }
-        #check7 .active {
-            width: 120px;
-            height: 307px;
+        #check8.active {
+            background: url("/static/img/icone/Risorsa 25.png");
+            background-size: contain;
         }
         #botis-title-vertical {
             width: 120px;
@@ -322,12 +382,13 @@
 </head>
 <body>
 <div id="content-bkg">
-    <div class="background">
+    <div id="background">
+        <div id="stars"></div>
         <div id="check-list">
             <div id="botis-title-vertical"></div>
             <ol id="list-point">
-                <li><div class="checkpoint active" id="check1"></div></li>
-                <li><div class="checkpoint active" id="check2"></div></li>
+                <li><div class="checkpoint" id="check1"></div></li>
+                <li><div class="checkpoint" id="check2"></div></li>
                 <li><div class="checkpoint" id="check3"></div></li>
                 <li><div class="checkpoint" id="check4"></div></li>
                 <li><div class="checkpoint" id="check5"></div></li>
@@ -335,7 +396,11 @@
                 <li><div class="checkpoint" id="check7"></div></li>
             </ol>
         </div>
-        <div id="boris-char"></div>
+        <div id="focus-on-char">
+            <div id="boris-char">
+                <div id="focus" class="none"></div>
+            </div>
+        </div>
         <div id="text-bkg">
             <div>
                 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas porta nunc sit amet dui lacinia luctus ut at leo. Pellentesque ipsum neque, placerat sit amet euismod quis, consectetur et erat. Suspendisse bibendum blandit nisl et fringilla. In sapien lectus, semper vel urna nec, elementum rhoncus dolor. Morbi aliquet eros suscipit gravida venenatis. Vestibulum urna ipsum, condimentum ac ornare ut, lobortis eget nulla. Donec euismod lorem ac consectetur porta. Pellentesque pellentesque est eu orci efficitur, ac molestie enim consequat.</p>
