@@ -110,6 +110,9 @@ let VOICES = {
     CXLIKECHORDS : Voice({
         name: EVNT.CXLIKECHORDS,
         path:"/static/audio/boris/LIKE_CHORD.wav"}),
+    CXPLAY : Voice({
+        name: EVNT.CXTRYSING,
+        path:"/static/audio/boris/START.wav"}),
     CXTRYSING : Voice({
         name: EVNT.CXTRYSING,
         path:"/static/audio/boris/TRY_SING.wav"}),
@@ -525,8 +528,6 @@ const BEvents = () => {
                 self.focusOnBoris(false);
                 // Boris will wait your answer
                 self.listnHank(function (nextEvent) {
-                    // generate new chords respect the answer
-                    getChords(stpMajor);
                     // the response will call the next event
                     return self.call(nextEvent)
                 }, true);
@@ -541,14 +542,14 @@ const BEvents = () => {
             // if we are here chords are done
             stpChords = true;
             // commit temp part into final
-            if (melodyPartTemp.length > 0) {
+            if (lastContext !== EVNT.CXRELISTENSONG) {
                 getMelody(blobMelody);
                 addMelody();
             }
             // schedule the stop
             self.scheduleEndPlay(self.currentContext);
             // Boris will congrats with you
-            VOICES.CXFEELINGS.play(function () {
+            VOICES.CXPLAY.play(function () {
                 // Boris will play your song
                 playNote(true, true, false);
                 // activate checkpoint
@@ -565,6 +566,8 @@ const BEvents = () => {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start chord feedback");
+            // generate new chords respect the answer
+            getChords(stpMajor);
             // activate checkpoint
             this.activeCheck(5);
             // focus on boris
@@ -632,7 +635,7 @@ const BEvents = () => {
                     // Boris will ask if your like this melody
                     self.listnHank(function (nextEvent) {
                         // if chords are already done play song
-                        if (self.lastContext !== nextEvent && stpChords) {
+                        if (nextEvent === EVNT.CXFEELINGS && stpChords) {
                             return self.call(EVNT.CXPLAY)
                         } else {
                             return self.call(nextEvent)

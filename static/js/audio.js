@@ -6,8 +6,8 @@ let chordsTone = SampleLibrary.load({
     instruments: "piano"});
 
 let melodyPartTemp = new Tone.Part();
+let melodyPartNew = new Tone.Part();
 let melodyPart = new Tone.Part();
-let newMelodyPart = new Tone.Part();
 let melodyTone = SampleLibrary.load({
     minify: true,
     instruments: "trumpet"});
@@ -24,7 +24,7 @@ getMelody =  blob  => {
         },
         success: function(data) {
             readBlob(data, melodyTone).then(function(part) {
-                newMelodyPart = part;
+                melodyPartNew = part;
             });
         },
         error: function(e) {
@@ -34,7 +34,7 @@ getMelody =  blob  => {
 };
 
 getChroma = (blob, callback) => {
-
+    melodyPartTemp.removeAll();
     $.ajax({
         url: '/get_chroma',
         dataType: 'json',
@@ -150,7 +150,7 @@ clearMelodyPartTemp = () => {
 };
 
 clearNewMelodyPart = () => {
-    newMelodyPart = newMelodyPart.removeAll();
+    melodyPartNew = melodyPartNew.removeAll();
 };
 
 clearChords = () => {
@@ -160,7 +160,7 @@ clearChords = () => {
 
 addMelody = () => {
     let notes = [];
-    let melodyNotesLength = newMelodyPart._events.length;
+    let melodyNotesLength = melodyPart._events.length;
 
     if (melodyNotesLength > 0) {
         // we are append
@@ -169,7 +169,7 @@ addMelody = () => {
         melodyPart._events.forEach(note => {
             notes.push(note.value)
         });
-        newMelodyPart._events.forEach(note => {
+        melodyPartNew._events.forEach(note => {
             let newNote = note.value;
             newNote.time = newNote.time + startNote;
             notes.push(newNote)
@@ -185,7 +185,7 @@ addMelody = () => {
         }, notes).start(0);
     } else {
         // we are init
-        newMelodyPart._events.forEach(note => {
+        melodyPartNew._events.forEach(note => {
             notes.push(note.value)
         });
 
@@ -198,5 +198,5 @@ addMelody = () => {
             );
         }, notes).start(0);
     }
-    newMelodyPart.removeAll();
+    melodyPartNew.removeAll();
 };
