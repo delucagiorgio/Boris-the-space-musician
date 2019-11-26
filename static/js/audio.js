@@ -5,15 +5,15 @@ let chordsTone = SampleLibrary.load({
     minify: true,
     instruments: "piano"});
 
-let melodyPartTemp = new Tone.Part();
+let melodyChroma = new Tone.Part();
 let melodyPartNew = new Tone.Part();
 let melodyPart = new Tone.Part();
 let melodyTone = SampleLibrary.load({
     minify: true,
     instruments: "trumpet"});
 
-getMelody =  blob  => {
-    clearNewMelodyPart();
+getMelody =  (blob, onsuccess)  => {
+    clearMelodyPartNew();
     $.ajax({
         url: '/get_melody',
         dataType: 'json',
@@ -25,6 +25,7 @@ getMelody =  blob  => {
         success: function(data) {
             readBlob(data, melodyTone).then(function(part) {
                 melodyPartNew = part;
+                onsuccess();
             });
         },
         error: function(e) {
@@ -33,8 +34,8 @@ getMelody =  blob  => {
     });
 };
 
-getChroma = (blob, callback) => {
-    melodyPartTemp.removeAll();
+getChroma = (blob, onsuccess) => {
+    clearMelodyChroma();
     $.ajax({
         url: '/get_chroma',
         dataType: 'json',
@@ -44,8 +45,8 @@ getChroma = (blob, callback) => {
         },
         success: function(data) {
             readBlob(data, melodyTone).then(function(part) {
-                melodyPartTemp = part;
-                callback();
+                melodyChroma = part;
+                onsuccess();
             });
         },
         error: function(e) {
@@ -131,9 +132,9 @@ const readBlob = (data, synth) => {
     return readPart(dataURItoBlob(blob), synth)
 };
 
-playNote = (withMelody = true, withChords = true, withTempMelody = true) => {
+playNote = (withMelody = true, withChords = true, withChroma = true) => {
     // set mute on melody
-    melodyPartTemp.mute = !withTempMelody;
+    melodyChroma.mute = !withChroma;
     melodyPart.mute = !withMelody;
     // set mute on chords
     chordsPart.mute = !withChords;
@@ -145,11 +146,11 @@ stopNote = () => {
     Tone.Transport.stop();
 };
 
-clearMelodyPartTemp = () => {
-    melodyPartTemp = melodyPartTemp.removeAll();
+clearMelodyChroma = () => {
+    melodyChroma = melodyChroma.removeAll();
 };
 
-clearNewMelodyPart = () => {
+clearMelodyPartNew = () => {
     melodyPartNew = melodyPartNew.removeAll();
 };
 
@@ -160,21 +161,23 @@ clearChords = () => {
 
 addMelody = () => {
     let notes = [];
+    let startNote = 0;
     let melodyNotesLength = melodyPart._events.length;
 
     if (melodyNotesLength > 0) {
         // we are append
-        let startNote = melodyPart.loopEnd;
-
+        startNote = melodyPart.loopEnd;
+        // init
         melodyPart._events.forEach(note => {
             notes.push(note.value)
         });
+        // append
         melodyPartNew._events.forEach(note => {
             let newNote = note.value;
             newNote.time = newNote.time + startNote;
             notes.push(newNote)
         });
-
+        // add
         melodyPart = new Tone.Part((time, note) => {
             melodyTone.triggerAttackRelease(
                 note.name,
@@ -184,11 +187,11 @@ addMelody = () => {
             );
         }, notes).start(0);
     } else {
-        // we are init
+        // init
         melodyPartNew._events.forEach(note => {
             notes.push(note.value)
         });
-
+        // add
         melodyPart = new Tone.Part((time, note) => {
             melodyTone.triggerAttackRelease(
                 note.name,
@@ -198,5 +201,28 @@ addMelody = () => {
             );
         }, notes).start(0);
     }
-    melodyPartNew.removeAll();
+    if (chordsPart.loopEnd !== 0 && chordsPart.loopEnd < melodyPart.loopEnd) {
+        notes = [];
+        // init
+        startNote = chordsPart.loopEnd;
+        chordsPart._events.forEach(note => {
+            notes.push(note.value)
+        });
+        // append
+        chordsPart._events.forEach(note => {
+            let newNote = note.value;
+            newNote.time = newNote.time + startNote;
+            notes.push(newNote)
+        });
+        // add
+        chordsPart = new Tone.Part((time, note) => {
+            chordsTone.triggerAttackRelease(
+                note.name,
+                note.duration,
+                time,
+                note.velocity
+            );
+        }, notes).start(0);
+    }
+    clearMelodyPartNew();
 };
