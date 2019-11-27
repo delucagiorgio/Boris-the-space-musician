@@ -58,6 +58,7 @@ def get_melody():
     if request.method == "POST":
         # decode audio file
         file_content = request.values.get("blob")
+        bpm = request.values.get("bpm")
         # remove base64 header
         file_content = file_content[22:]
         # convert from base64 to bytecodes
@@ -73,7 +74,7 @@ def get_melody():
             f.write(bytecodes)
             f.close()
 
-            b = Chroma(path_audio=in_file, path_midi=out_file, tempo=120)
+            b = Chroma(path_audio=in_file, path_midi=out_file, tempo=bpm)
             b.run()
 
         os.remove(in_file)
@@ -105,6 +106,7 @@ def get_chroma():
     if request.method == "POST":
         # decode audio file
         file_content = request.values.get("blob")
+        bpm = request.values.get("bpm")
         # remove base64 header
         file_content = file_content[22:]
         # convert from base64 to bytecodes
@@ -120,7 +122,7 @@ def get_chroma():
             f.write(bytecodes)
             f.close()
 
-            b = Chroma(path_audio=in_file, path_midi=out_file, tempo=120)
+            b = Chroma(path_audio=in_file, path_midi=out_file, tempo=bpm)
             b.run()
 
         os.remove(in_file)

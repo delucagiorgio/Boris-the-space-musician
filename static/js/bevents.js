@@ -8,6 +8,8 @@ const EVNT = {
     CXLIKECHORDS: "CX_LIKE_CHORDS",
     CXTRYSING: "CX_TRY_SING",
     CXLIKEMELODY: "CX_LIKE_MELODY",
+    CXTRYSINGLOOP: "CX_TRY_SING_LOOP",
+    CXLIKEMELODYLOOP: "CX_LIKE_MELODY_LOOP",
     CXPLAY: "CX_PLAY",
     CXRELISTENSONG: "CX_RELISTEN_SONG",
     CXADDMELODY: "CX_ADD_MELODY",
@@ -35,13 +37,13 @@ const AudioSource = (state) => {
     let bufferSource = undefined;
     let buffer = new Promise((resolve, reject) => {
         try {
-            if (_DEBUG) console.log( "[voice] loading " + name);
+            if (_DEBUG) console.log("[voice] loading " + name);
             // load player
             let buffer = new Tone.Buffer({
                 url: path,
                 reverse: false,
                 onload: function () {
-                    if (_DEBUG) console.log( "[voice] loaded " + name);
+                    if (_DEBUG) console.log("[voice] loaded " + name);
                     resolve(buffer)
                 },
                 onerror: function () {
@@ -90,7 +92,7 @@ const AudioSource = (state) => {
 
                 // connect to master and start
                 if (name === EVNT.CXSTART + "_SONG") {
-                    bufferSource.chain(new Tone.Volume(-30), Tone.Master);
+                    bufferSource.chain(new Tone.Volume(-35), Tone.Master);
                 } else {
                     bufferSource.chain(new Tone.Volume(-1), Tone.Master);
                 }
@@ -105,73 +107,126 @@ const AudioSource = (state) => {
     }
 };
 let FX = {
-    CXSTARTSONG : AudioSource({
+    CXSTARTSONG: AudioSource({
         name: EVNT.CXSTART + "_SONG",
         path: "/static/audio/boris/BORIS_MELODY_EXP.mp3",
         loop: true,
-        fadeIn: 2}),
-    CXTEMPOL : AudioSource({
+        fadeIn: 2
+    }),
+    CXTEMPOL: AudioSource({
         name: EVNT.CXTEMPO + "_LOW",
-        path: "/static/audio/boris/CIAO.mp3"}),
-    CXTEMPOH : AudioSource({
+        path: "/static/audio/metronome/80.mp3"
+    }),
+    CXTEMPOH: AudioSource({
         name: EVNT.CXTEMPO + "_HIGH",
-        path: "/static/audio/boris/CIAO.mp3"}),
-    CXFEELUP : AudioSource({
+        path: "/static/audio/metronome/120.mp3"
+    }),
+    CXFEELUP: AudioSource({
         name: EVNT.CXFEELINGS + "_UP",
-        path: "/static/audio/boris/FEEL_UP.mp3"}),
-    CXFEELDOWN : AudioSource({
+        path: "/static/audio/boris/FEEL_UP.mp3"
+    }),
+    CXFEELDOWN: AudioSource({
         name: EVNT.CXFEELINGS + "_DOWN",
-        path: "/static/audio/boris/FEEL_DOWN.mp3"})
+        path: "/static/audio/boris/FEEL_DOWN.mp3"
+    })
 };
 let VOICES = {
-    CXSTART : AudioSource({
+    CXSTART: AudioSource({
         name: EVNT.CXSTART,
-        path:"/static/audio/boris/CIAO.mp3"}),
-    CXLEARNTUTORIAL : AudioSource({
+        path: "/static/audio/boris/ERICA_WELCOME.wav"
+    }),
+    CIAO: AudioSource({
+        name: EVNT.CXSTART,
+        path: "/static/audio/boris/CIAO.mp3"
+    }),
+    CXINTRO1: AudioSource({
+        name: EVNT.CXSTART,
+        path: "/static/audio/boris/ERICA_INTRO_1.wav"
+    }),
+    CXINTRO2: AudioSource({
+        name: EVNT.CXSTART,
+        path: "/static/audio/boris/ERICA_INTRO_2.wav"
+    }),
+    CXINTRO3: AudioSource({
+        name: EVNT.CXSTART,
+        path: "/static/audio/boris/ERICA_INTRO_3.wav"
+    }),
+    CXLEARNTUTORIAL0: AudioSource({
         name: EVNT.CXLEARNTUTORIAL,
-        path:"/static/audio/boris/LEARN_TUTORIAL.wav"}),
-    CXTUTORIALOK : AudioSource({
+        path: "/static/audio/boris/ERICA_TUTORIAL_0.wav"
+    }),
+    CXLEARNTUTORIAL1: AudioSource({
+        name: EVNT.CXLEARNTUTORIAL,
+        path: "/static/audio/boris/ERICA_TUTORIAL_1.wav"
+    }),
+    CXLEARNTUTORIAL2: AudioSource({
+        name: EVNT.CXLEARNTUTORIAL,
+        path: "/static/audio/boris/ERICA_TUTORIAL_2.wav"
+    }),
+    CXLEARNTUTORIAL3: AudioSource({
+        name: EVNT.CXLEARNTUTORIAL,
+        path: "/static/audio/boris/ERICA_TUTORIAL_3.wav"
+    }),
+    CXLEARNTUTORIAL4: AudioSource({
+        name: EVNT.CXLEARNTUTORIAL,
+        path: "/static/audio/boris/ERICA_TUTORIAL_4.wav"
+    }),
+    CXTUTORIALOK: AudioSource({
         name: EVNT.CXTUTORIALOK,
-        path:"/static/audio/boris/COMPRESO_TUTORIAL.mp3"}),
-    CXTEMPO : AudioSource({
+        path: "/static/audio/boris/COMPRESO_TUTORIAL.mp3"
+    }),
+    CXTEMPO: AudioSource({
         name: EVNT.CXTEMPO,
-        path:"/static/audio/boris/CX_TEMPO_MAIN.mp3"}),
-    CXTEMPONEXT : AudioSource({
+        path: "/static/audio/boris/CX_TEMPO_MAIN.mp3"
+    }),
+    CXTEMPONEXT: AudioSource({
         name: EVNT.CXTEMPO,
-        path:"/static/audio/boris/CX_TEMPO_LOOP.mp3"}),
-    CXFEELINGS : AudioSource({
+        path: "/static/audio/boris/CX_TEMPO_LOOP.mp3"
+    }),
+    CXFEELINGS: AudioSource({
         name: EVNT.CXFEELINGS,
-        path:"/static/audio/boris/CX_FEELINGS_MAIN.mp3"}),
-    CXFEELINGSNEXT : AudioSource({
+        path: "/static/audio/boris/CX_FEELINGS_MAIN.mp3"
+    }),
+    CXFEELINGSNEXT: AudioSource({
         name: EVNT.CXFEELINGS,
-        path:"/static/audio/boris/CX_FEELINGS_LOOP.mp3"}),
-    CXLIKECHORDS : AudioSource({
+        path: "/static/audio/boris/CX_FEELINGS_LOOP.mp3"
+    }),
+    CXLIKECHORDS: AudioSource({
         name: EVNT.CXLIKECHORDS,
-        path:"/static/audio/boris/CX_LIKE_CHORDS_MAIN.mp3"}),
-    CXLIKECHORDSNEXT : AudioSource({
+        path: "/static/audio/boris/CX_LIKE_CHORDS_MAIN.mp3"
+    }),
+    CXLIKECHORDSNEXT: AudioSource({
         name: EVNT.CXLIKECHORDS,
-        path:"/static/audio/boris/CX_LIKE_CHORDS_LOOP.mp3"}),
-    CXPLAY : AudioSource({
+        path: "/static/audio/boris/CX_LIKE_CHORDS_LOOP.mp3"
+    }),
+    CXPLAY: AudioSource({
         name: EVNT.CXPLAY,
-        path:"/static/audio/boris/CX_PLAY.mp3"}),
-    CXTRYSING : AudioSource({
+        path: "/static/audio/boris/CX_PLAY.mp3"
+    }),
+    CXTRYSING: AudioSource({
         name: EVNT.CXTRYSING,
-        path:"/static/audio/boris/CX_TRYSING.mp3"}),
-    CXLIKEMELODY : AudioSource({
+        path: "/static/audio/boris/CX_TRYSING.mp3"
+    }),
+    CXLIKEMELODY: AudioSource({
         name: EVNT.CXLIKEMELODY,
-        path:"/static/audio/boris/CX_LIKE_MELODY_MAIN.mp3"}),
-    CXRELISTENSONG : AudioSource({
+        path: "/static/audio/boris/CX_LIKE_MELODY_MAIN.mp3"
+    }),
+    CXRELISTENSONG: AudioSource({
         name: EVNT.CXRELISTENSONG,
-        path:"/static/audio/boris/CX_RELISTEN_SONG.mp3"}),
-    CXADDMELODY : AudioSource({
+        path: "/static/audio/boris/CX_RELISTEN_SONG.mp3"
+    }),
+    CXADDMELODY: AudioSource({
         name: EVNT.CXADDMELODY,
-        path:"/static/audio/boris/CX_ADD_MELODY.mp3"}),
-    CXNEWSONG : AudioSource({
+        path: "/static/audio/boris/CX_ADD_MELODY.mp3"
+    }),
+    CXNEWSONG: AudioSource({
         name: EVNT.CXNEWSONG,
-        path:"/static/audio/boris/CX_NEW_SONG.mp3"}),
-    CXEND : AudioSource({
+        path: "/static/audio/boris/CX_NEW_SONG.mp3"
+    }),
+    CXEND: AudioSource({
         name: EVNT.CXEND,
-        path:"/static/audio/boris/CX_END.mp3"}),
+        path: "/static/audio/boris/CX_END.mp3"
+    }),
 };
 
 const BEvents = () => {
@@ -188,12 +243,12 @@ const BEvents = () => {
     let watchDogs = null;
     let speechEvents = null;
     // midi
-    let tempo = 120;
+    let tempo = 80;
     let tempoLength = 0;
     let blobMelody = null;
     let stpMelody = false;
     let stpChords = false;
-    let stpMajor  = false;
+    let stpMajor = false;
     // context
     let lastContext = null;
     let playMusic = true;
@@ -223,7 +278,7 @@ const BEvents = () => {
                     },
                 }, function (stream) {
                     resolve(stream);
-                }, function(e) {
+                }, function (e) {
                     reject(new DOMException("[audio] error getting audio"));
                 });
             if (_DEBUG) console.log("[audio] context initialized");
@@ -275,8 +330,8 @@ const BEvents = () => {
             let self = this;
             userStream.then(function (stream) {
                 speechEvents = hark(stream, {
-                    interval : 90,
-                    threshold : -50
+                    interval: 90,
+                    threshold: -50
                 });
                 if (_DEBUG) console.log("[hark] speech events armed");
                 // start recording input audio
@@ -284,11 +339,11 @@ const BEvents = () => {
                 // remove focus on boris
                 self.focusOnBoris(false);
                 // event on speech
-                speechEvents.on('speaking', function() {
+                speechEvents.on('speaking', function () {
                     if (_DEBUG) console.log('[hark] speaking');
                 });
                 // event on stop speech
-                speechEvents.on('stopped_speaking', function() {
+                speechEvents.on('stopped_speaking', function () {
                     if (_DEBUG) console.log('[hark] stopped_speaking');
                     // stop recording
                     speechEvents.stop();
@@ -324,7 +379,7 @@ const BEvents = () => {
             // export wav to blob
             audioRecorder.exportWAV(function (blob) {
                 // export blob to base64
-                convertBlobToBase64(blob).then(function(base64) {
+                convertBlobToBase64(blob).then(function (base64) {
                     // callback will receive nextcontext
                     if (ajax) {
                         if (_DEBUG) console.log("[dialogflow] request context:" + inputContext);
@@ -336,13 +391,13 @@ const BEvents = () => {
                                 "input-context": inputContext,
                                 "blob": base64
                             },
-                            success: function(data) {
+                            success: function (data) {
                                 if (_DEBUG) console.log("[server] response success");
                                 if (_DEBUG) console.log("[boris] next context > " + data.context);
                                 // send to server the request with CONTEXT
                                 callback(data.context.toUpperCase())
                             },
-                            error: function(e) {
+                            error: function (e) {
                                 if (_DEBUG) {
                                     console.log("[server] error on response");
                                     console.log(e)
@@ -358,7 +413,7 @@ const BEvents = () => {
         },
         scheduleEndPlay(context) {
             let usability;
-            let lenPie = [0,0,0]; // melodyPartTemp[0], chordsPart[1], melodyPart[2]
+            let lenPie = [0, 0, 0]; // melodyPartTemp[0], chordsPart[1], melodyPart[2]
 
             if (melodyChroma.length !== 0) {
                 usability = melodyChroma._events[melodyChroma._events.length - 1];
@@ -382,8 +437,8 @@ const BEvents = () => {
             }
             tempoLength = tempoLength + 2;
             //trigger the callback when the Transport reaches the desired time
-            Tone.Transport.scheduleOnce(function(){
-                if (_DEBUG)console.log("[tonejs:schedule] stop music after " + tempoLength);
+            Tone.Transport.scheduleOnce(function () {
+                if (_DEBUG) console.log("[tonejs:schedule] stop music after " + tempoLength);
                 stopNote();
             }, tempoLength);
         },
@@ -403,7 +458,7 @@ const BEvents = () => {
                 case EVNT.CXLEARNTUTORIAL:
                     this.lastContext = this.currentContext;
                     this.currentContext = EVNT.CXLEARNTUTORIAL;
-                    this.cxLearnTutorial() ;
+                    this.cxLearnTutorial();
                     break;
                 case EVNT.CXTUTORIALOK:
                     this.lastContext = this.currentContext;
@@ -426,13 +481,23 @@ const BEvents = () => {
                     this.cxLikeChords();
                     break;
                 case EVNT.CXTRYSING:
+                case EVNT.CXTRYSINGLOOP:
                     this.lastContext = this.currentContext;
-                    this.currentContext = EVNT.CXTRYSING;
+                    if(this.lastContext === EVNT.CXADDMELODY) {
+                        this.currentContext = EVNT.CXTRYSINGLOOP;
+                    }else{
+                        this.currentContext = EVNT.CXTRYSING;
+                    }
                     this.cxTrySing();
                     break;
                 case EVNT.CXLIKEMELODY:
+                case EVNT.CXLIKEMELODYLOOP:
                     this.lastContext = this.currentContext;
-                    this.currentContext = EVNT.CXLIKEMELODY;
+                    if(this.lastContext === EVNT.CXTRYSINGLOOP) {
+                        this.currentContext = EVNT.CXLIKEMELODYLOOP;
+                    }else{
+                        this.currentContext = EVNT.CXLIKEMELODY;
+                    }
                     this.cxLikeMelody();
                     break;
                 case EVNT.CXRELISTENSONG:
@@ -458,7 +523,7 @@ const BEvents = () => {
                 case EVNT.CXRESTART:
                     this.lastContext = this.currentContext;
                     this.currentContext = EVNT.CXRESTART;
-                    this.cxEnd();
+                    this.cxRestart();
                     break;
                 case EVNT.CXEND:
                     this.lastContext = this.currentContext;
@@ -481,13 +546,25 @@ const BEvents = () => {
                 $(id).removeClass('active');
             }
         },
+
+        focusOnBoris(active = true) {
+            let id = "#focus";
+            if (active) {
+                if (_DEBUG) console.log("[front] focus active on boris");
+                $(id).addClass('active');
+            } else {
+                // remove focus on boris
+                if (_DEBUG) console.log("[front] remove focus on boris");
+                $(id).removeClass('active');
+            }
+        },
         activeCheck(start = 1) {
             let id = "#check";
             for (let i = 2; i < 9; i++) {
                 if (i <= start) {
-                    $(id+i).addClass('active')
-                } else  {
-                    $(id+i).removeClass('active')
+                    $(id + i).addClass('active')
+                } else {
+                    $(id + i).removeClass('active')
                 }
             }
         },
@@ -507,7 +584,7 @@ const BEvents = () => {
         writeOnText(text = 'Ops you miss the text!') {
             $("#text").html(text);
         },
-        cxStart(){
+        cxStart() {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start");
@@ -516,7 +593,7 @@ const BEvents = () => {
             // activate checkpoint
             this.activeCheck(2);
             // wait for "Boris!" activating command
-            setTimeout(function(){
+            setTimeout(function () {
                 // Boris will say "Hello"
                 VOICES.CXSTART.play(function () {
                         if (_DEBUG) console.log("[boris] next event to be launched");
@@ -525,37 +602,117 @@ const BEvents = () => {
                     , function () {
                         // write text on screen
                         setTimeout(function () {
-                            self.writeOnText("Example");
-                        },0)
+                            self.writeOnText("Benvenuto! Ti presentiamo Boris, il musicista spaziale!");
+                        }, 0)
                     })
-            }, 12500);
+            }, 3000);
         },
         cxLearnTutorial() {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start learn tutorial");
-            // focus on boris
-            this.focusOnBoris(true);
-            // Boris will hask if you want to learn the tutorial
-            VOICES.CXLEARNTUTORIAL.play(Tone.noOp , function () {
-                setTimeout(function () {
-                    // Boris will wait your answer
-                    self.listnHank(function (nextEvent) {
-                        // the response will call the next event
-                        if (nextEvent === EVNT.CXTUTORIALOK) {
-                            VOICES.CXLEARNTUTORIAL.stop();
-                            // if user will call this event, move to cxTempo
-                            return self.call(EVNT.CXTEMPO);
-                        }
-                    }, true);
-                }, 5000);
-                // write text on screen
-                setTimeout(function () {
-                    self.writeOnText("Example");
-                },0)
-            });
+            setTimeout(function () {
+                VOICES.CXINTRO1.play(Tone.noOp, function () {
+                    // write text on screen
+                    self.writeOnText("Non preoccuparti, non è un programma spaziale, si tratta più un esperimento musicale ambientato nello spazio. Ecco come funziona: a breve dovrai registrare un motivetto che ti assilla o inventarne uno di sana pianta, non preoccuparti se sei stonato, un po’ indeciso o se non hai mai studiato musica al conservatorio.");
+                });
+            }, 6500)
+
+            setTimeout(function () {
+                VOICES.CXINTRO2.play(Tone.noOp, function () {
+                    // write text on screen
+                    self.writeOnText("Una volta registrata la tua voce avverrà la magia: l’applicazione costruirà una vera e propria melodia orecchiabile, partendo dalle poche note (magari anche stonate) che gli hai fornito.");
+                }),
+                    setTimeout(function () {
+
+                        self.writeOnText("Ti stupirai di quanto tutto possa essere estremamente orecchiabile e magari deciderai di intraprendere una carriera da compositore, mai dire mai!");
+                    }, 11000)
+            }, 27500)
+
+
+            setTimeout(function () {
+                VOICES.CXINTRO3.play(Tone.noOp, function () {
+                    // write text on screen
+                    self.writeOnText("Una volta conclusa la tua esperienza, puoi decidere di allungare il brano chiedendo ad amici e parenti di collaborare alla tua creazione o registrando tu stesso una nuova melodia. ");
+                }),
+                    setTimeout(function () {
+
+                        self.writeOnText("Ora sei pronto per sfondare nel mercato discografico!");
+                    }, 11000)
+            }, 46500)
+
+            let playing = VOICES.CXLEARNTUTORIAL0;
+            let stopped = false;
+
+            setTimeout(function () {// focus on boris
+                // Boris will hask if you want to learn the tutorial
+                VOICES.CXLEARNTUTORIAL0.play(Tone.noOp, function () {
+                    setTimeout(function () {
+                        // Boris will wait your answer
+                        self.listnHank(function (nextEvent) {
+                            // the response will call the next event
+                            if (nextEvent === EVNT.CXTUTORIALOK) {
+                                playing.stop();
+                                stopped = true;
+                                // if user will call this event, move to cxTempo
+                                return self.call(EVNT.CXTEMPO);
+                            }
+                        }, true);
+                    }, 0);
+
+                    self.writeOnText("Ecco un breve tutorial per illustrarti i comandi principali e per farti orientare nel mondo di Boris");
+                });
+            }, 61000);
+
+            setTimeout(function () {
+                if(!stopped){
+                    playing = VOICES.CXLEARNTUTORIAL1;
+                    VOICES.CXLEARNTUTORIAL1.play(Tone.noOp, function () {
+                        self.writeOnText("Lui è Boris, il musicista spaziale e ti seguirà in tutta l’esperienza");
+                })};
+            }, 67000);
+
+            setTimeout(function () {
+                if(!stopped){
+                    playing = VOICES.CIAO;
+                    VOICES.CIAO.play(Tone.noOp, function () {
+                        self.writeOnText("Ciao, io sono Boris");
+                })}
+            }, 72000)
+
+            setTimeout(function () {
+                if(!stopped){
+                    playing = VOICES.CXLEARNTUTORIAL2;
+                    VOICES.CXLEARNTUTORIAL2.play(Tone.noOp, function () {
+                        self.writeOnText("Qui puoi visualizzare tutti gli step del processo e capire fino a che punto sei arrivato.");
+                })};
+            }, 74000);
+
+            setTimeout(function () {
+                if(!stopped){
+                    playing = VOICES.CXLEARNTUTORIAL3;
+                    VOICES.CXLEARNTUTORIAL3.play(Tone.noOp, function () {
+                        self.writeOnText("L’intera applicazione funziona con 2 comandi vocali: si/no come risposte alle domande che ti verranno poste per proseguire nell’esperienza");
+                })};
+            }, 80000);
+
+            setTimeout(function () {
+                if(!stopped){
+                playing = VOICES.CXLEARNTUTORIAL4;
+                VOICES.CXLEARNTUTORIAL4.play(Tone.noOp, function () {
+                    self.writeOnText("Quando si accenderà questa icona il programma è pronto a registrare la tua voce, quindi sarà il momento di rispondere a una domanda o registrare la tua canzone");
+                })};
+            }, 89000);
+
+            setTimeout(function () {
+                if(!stopped) {
+                    return self.call(EVNT.CXTUTORIALOK);
+                }
+            }, 100000);
+
+
         },
-        cxTutorialOk(){
+        cxTutorialOk() {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start tutorial feedback");
@@ -573,11 +730,12 @@ const BEvents = () => {
                     setTimeout(function () {
                         self.writeOnText("sì - iniziamo con l’esperienza\n" +
                             "no - ripetimi il tutorial")
-                    },8000)
-                },0)
+                    }, 3000)
+                }, 0)
             });
-        },
-        cxTempo(){
+        }
+        ,
+        cxTempo() {
             let self = this;
             let click = null;
             // log event  description
@@ -606,6 +764,14 @@ const BEvents = () => {
                         self.listnHank(function (nextEvent) {
                             // if user says no, than change status
                             self.nextTempo = (nextEvent === "CX_TEMPO") ? !self.nextTempo : self.nextTempo;
+                            if (nextTempo) {
+                                if (tempo === 120) {
+                                    tempo = 80;
+                                } else {
+                                    tempo = 120;
+                                }
+                            }
+
                             // check if music should be played in default fallback
                             self.playMusic = nextEvent !== defaulFallback;
                             // the response will call the next event
@@ -645,8 +811,9 @@ const BEvents = () => {
                     }, 0)
                 }
             });
-        },
-        cxFeelings(){
+        }
+        ,
+        cxFeelings() {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start feelings");
@@ -714,8 +881,9 @@ const BEvents = () => {
                     }, 0)
                 }
             });
-        },
-        cxPlay(){
+        }
+        ,
+        cxPlay() {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start playing music");
@@ -726,7 +894,7 @@ const BEvents = () => {
             // commit temp part into final
             if (lastContext !== EVNT.CXRELISTENSONG) {
                 clearMelodyChroma();
-                getMelody(blobMelody, function () {
+                getMelody(blobMelody, tempo, function () {
                     addMelody();
                 });
             }
@@ -750,12 +918,13 @@ const BEvents = () => {
                         self.writeOnText("Aspetta la trasformazione..");
                         setTimeout(function () {
                             self.writeOnText("Ok ci sono. Possiamo ascoltarla insieme");
-                        },3000)
-                    },7000)
-                },0)
+                        }, 3000)
+                    }, 7000)
+                }, 0)
             });
-        },
-        cxLikeChords(){
+        }
+        ,
+        cxLikeChords() {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start chord feedback");
@@ -797,11 +966,12 @@ const BEvents = () => {
                     self.writeOnText("Una canzone senza accordi non è nulla, scegli l’accordo che ti piace di più per personalizzare la tua melodia!");
                     setTimeout(function () {
                         self.writeOnText("Vuoi scegliere questo accordo?")
-                    },8000)
-                },0)
+                    }, 8000)
+                }, 0)
             });
-        },
-        cxTrySing(){
+        }
+        ,
+        cxTrySing() {
             let self = this;
             // reset nextTempo
             this.nextTempo = false;
@@ -820,9 +990,13 @@ const BEvents = () => {
                     // save blob sing
                     blobMelody = base64;
                     // generate the melody
-                    getChroma(base64, function () {
-                        // the response will call the next event
-                        return self.call(EVNT.CXLIKEMELODY)
+                    getChroma(base64, tempo, function () {
+                        if(this.currentContext === EVNT.CXTRYSING) {
+                            // the response will call the next event
+                            return self.call(EVNT.CXLIKEMELODY)
+                        }else{
+                            return self.call(EVNT.CXLIKEMELODYLOOP)
+                        }
                     });
                 }, false);
             }, function () {
@@ -833,12 +1007,13 @@ const BEvents = () => {
                         self.writeOnText("Indovina… È arrivato il tuo turno! Ora non preoccuparti della bellezza o della lunghezza del motivetto che vuoi cantare, se non ti piace avrai comunque modo di rifarlo!");
                         setTimeout(function () {
                             self.writeOnText("Pronto? Bene, attendi l’accensione della spia per iniziare a cantare!");
-                        },13500)
-                    },3700)
-                },0)
+                        }, 13500)
+                    }, 3700)
+                }, 0)
             })
-        },
-        cxLikeMelody(){
+        }
+        ,
+        cxLikeMelody() {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start melody feedback");
@@ -850,7 +1025,7 @@ const BEvents = () => {
                     // schedule the stop
                     self.scheduleEndPlay(self.currentContext);
                     // Boris will play the melody
-                    playNote(false, false,true);
+                    playNote(false, false, true);
                 } else {
                     Tone.Transport.stop();
                 }
@@ -861,23 +1036,21 @@ const BEvents = () => {
                     self.writeOnText("sì - vai al prossimo passaggio<br />no - registra di nuovo");
                     // Boris will ask if your like this melody
                     self.listnHank(function (nextEvent) {
-                        // if chords are already done play song
-                        if (nextEvent === EVNT.CXFEELINGS && stpChords) {
-                            return self.call(EVNT.CXPLAY)
-                        } else {
-                            // check if music should be played in default fallback
-                            self.playMusic = nextEvent !== defaulFallback;
-                            // the response will call the next event
-                            return self.call(nextEvent)
-                        }
+
+                        // check if music should be played in default fallback
+                        self.playMusic = nextEvent !== defaulFallback;
+                        // the response will call the next event
+                        return self.call(nextEvent)
+
                     }, true);
                 });
             }, function () {
                 // write text on screen
                 self.writeOnText("Quella che stai sentendo ora è la prima rielaborazione della tua voce, ti piace?");
             });
-        },
-        cxRelistenSong(){
+        }
+        ,
+        cxRelistenSong() {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start relisten");
@@ -895,8 +1068,9 @@ const BEvents = () => {
                 // write text on screen
                 self.writeOnText("Bella vero? Vuoi riascoltarla?");
             });
-        },
-        cxAddMelody(){
+        }
+        ,
+        cxAddMelody() {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start add melody");
@@ -916,8 +1090,9 @@ const BEvents = () => {
                 // write text on screen
                 self.writeOnText("Ottimo, siamo arrivati quasi alla fine! vuoi aggiungere un’altra parte al tuo componimento?");
             });
-        },
-        cxNewSong(){
+        }
+        ,
+        cxNewSong() {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start new song");
@@ -935,15 +1110,17 @@ const BEvents = () => {
                 // write text on screen
                 self.writeOnText("Speriamo ti sia divertito e se sei abbastanza ispirato puoi registrare anche qualcosa di nuovo!  Vuoi iniziare una nuova canzone?");
             });
-        },
-        cxRestart(){
+        }
+        ,
+        cxRestart() {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] restart");
             // Boris will restart
             return self.call(EVNT.CXTEMPO);
-        },
-        cxEnd(){
+        }
+        ,
+        cxEnd() {
             let self = this;
             // log event  description
             if (_DEBUG) console.log("[boris] start end");

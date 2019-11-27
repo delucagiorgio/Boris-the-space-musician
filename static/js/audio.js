@@ -12,7 +12,7 @@ let melodyTone = SampleLibrary.load({
     minify: true,
     instruments: "trumpet"});
 
-getMelody =  (blob, onsuccess)  => {
+getMelody =  (blob,bpm, onsuccess)  => {
     clearMelodyPartNew();
     $.ajax({
         url: '/get_melody',
@@ -20,7 +20,8 @@ getMelody =  (blob, onsuccess)  => {
         type: 'post',
         data: {
             "title": chordsTitle,
-            "blob": blob
+            "blob": blob,
+            "bpm": bpm
         },
         success: function(data) {
             readBlob(data, melodyTone).then(function(part) {
@@ -34,14 +35,16 @@ getMelody =  (blob, onsuccess)  => {
     });
 };
 
-getChroma = (blob, onsuccess) => {
+getChroma = (blob, bpm, onsuccess) => {
     clearMelodyChroma();
+
     $.ajax({
         url: '/get_chroma',
         dataType: 'json',
         type: 'post',
         data: {
-            "blob": blob
+            "blob": blob,
+            "bpm": bpm
         },
         success: function(data) {
             readBlob(data, melodyTone).then(function(part) {
@@ -132,7 +135,9 @@ const readBlob = (data, synth) => {
     return readPart(dataURItoBlob(blob), synth)
 };
 
-playNote = (withMelody = true, withChords = true, withChroma = true) => {
+
+playNote = (withMelody = true, withChords = true, withChroma = true, bpm = 120) => {
+	Tone.Transport.bpm.value = bpm;
     // set mute on melody
     melodyChroma.mute = !withChroma;
     melodyPart.mute = !withMelody;

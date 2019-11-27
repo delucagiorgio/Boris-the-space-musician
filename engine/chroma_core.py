@@ -5,14 +5,13 @@ import librosa.core as core
 import scipy.signal as filt
 
 #  VARIABILI GLOBALI PER IL CONTROLLO DELLE PRINCIPALI IMPOSTAZIONI DI PITCH TRACKING E CREAZIONE DELLE NOTE MIDI
-TIME_THRESHOLD_NOTE_CREATION = 2.0/12
+TIME_THRESHOLD_NOTE_CREATION = 2.0/32
 WINDOW_MEDIAN_LENGTH = 3
 THRESHOLD_MAGNITUDE = 0.1
 DELTA_FREQ = 8
 RATIO_FORMANT = 0.4
 FMIN_PIPTRACK = 60
-FMAX_PIPTRACK = 1200
-QUANTIZATION_UNIT = 2.0/8
+QUANTIZATION_UNIT = 2.0/16
 
 
 class Chroma:
@@ -213,8 +212,3 @@ class Chroma:
                 new_pitches[i] = 0
 
         return new_pitches
-
-#
-# b = Chroma(path_audio="in/voce.wav", path_midi="out/voce", tempo=120)
-# b.run()
-#

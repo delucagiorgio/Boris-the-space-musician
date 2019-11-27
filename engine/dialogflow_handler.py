@@ -1,5 +1,6 @@
 import os
 import dialogflow_v2 as dialogflow
+import wave
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "AUI Boris-20278b34fe36.json"
 class BorisDialogFlow:
@@ -26,7 +27,6 @@ class BorisDialogFlow:
 
         # Note: hard coding audio_encoding and sample_rate_hertz for simplicity.
         audio_encoding = dialogflow.enums.AudioEncoding.AUDIO_ENCODING_LINEAR_16
-        sample_rate_hertz = 48000
 
         session = session_client.session_path(self.project_id, self.session_id)
         #print('Session path: {}\n'.format(session))
@@ -39,6 +39,8 @@ class BorisDialogFlow:
         with open( self.audio_file, 'rb') as audio_file:
             input_audio = audio_file.read()
 
+        with wave.open(self.audio_file, 'rb') as f:
+            sample_rate_hertz = f.getframerate()
 
         context_name = "projects/" + self.project_id + "/agent/sessions/" + self.session_id + "/contexts/" + \
                        context_short_name.lower()
@@ -55,17 +57,13 @@ class BorisDialogFlow:
             sample_rate_hertz=sample_rate_hertz)
         query_input = dialogflow.types.QueryInput(audio_config=audio_config)
 
-        response = session_client.detect_intent(
-            session=session, query_input=query_input,
-            input_audio=input_audio, query_params=query_params)
 
-        # print('=' * 20)
-        # print('Query text: {}'.format(response.query_result.query_text))
-        # print('Detected intent: {} (confidence: {})\n'.format(
-        #     response.query_result.intent.display_name,
-        #     response.query_result.intent_detection_confidence))
-        # print('Fulfillment text: {}\n'.format(
-        #     response.query_result.fulfillment_text))
+        try:
+            response = session_client.detect_intent(
+                session=session, query_input=query_input,
+                input_audio=input_audio, query_params=query_params)
+        except:
+            return 'default fallback intent'
 
         if response.query_result.output_contexts:
             out_context = response.query_result.output_contexts[0].name
