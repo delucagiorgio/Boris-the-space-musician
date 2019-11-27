@@ -75,9 +75,26 @@
                 transform: translateY(-20px) rotateX(-5deg);
             }
         }
+        @keyframes move-on-planet-red {
+            from {
+            }
+            to {
+                top: 1.1%;
+                left: 74%;
+            }
+        }
+        @keyframes move-on-planet-blu {
+            from {
+                top: 1.1%;
+                left: 74%;
+            }
+            to {
+                top: 1.1%;
+                left: 20%;
+            }
+        }
         @keyframes move-feelings-planet {
             from {
-                transform: translateY(10px) rotateY(15deg);
             }
             to {
                 transform: translateY(-10px) rotateY(-15deg);
@@ -89,6 +106,22 @@
             }
             to {
                 transform: translateX(560px);
+            }
+        }
+        @keyframes eye-fill {
+            from {
+                background-position: left;
+            }
+            to {
+                background-position: right;
+            }
+        }
+        @keyframes flying {
+            from {
+                transform: translateY(12000px) scale(0.25);
+            }
+            to {
+                transform: translateY(-760px) scale(0.25);
             }
         }
         html {
@@ -129,9 +162,9 @@
             top: 0;
         }
         #planet-blu {
+            left: 17%;
+            top: 1.6%;
             position: absolute;
-            top: 20px;
-            left: -400px;
             width: 180px;
             height: 180px;
             background: url(/static/img/pianetaViola-04.png);
@@ -139,12 +172,11 @@
             background-repeat: no-repeat;
             transition: all 1s ease-in;
             transform: translateX(-100vh);
-
         }
         #planet-red {
+            right: 12%;
+            top: 1.6%;
             position: absolute;
-            top: 0;
-            right: -400px;
             width: 180px;
             height: 215px;
             background: url(/static/img/pianeta-giallo.png);
@@ -152,7 +184,6 @@
             background-repeat: no-repeat;
             transition: all 1s ease-in;
             transform: translateX(100vh);
-
         }
         #planet-blu.active {
             animation: move-feelings-planet 2s;
@@ -167,6 +198,10 @@
             animation-timing-function: linear;
             animation-direction: alternate-reverse;
             transform: translateX(0);
+        }
+        #planet-red.active.zoom, #planet-blu.active.zoom {
+            animation: none;
+            transform: translateX(0) scale(1.5);
         }
         #planet-1 {
             margin-bottom: 40vh;
@@ -220,7 +255,49 @@
             opacity: 1;
             transform: scale(1);
         }
-        #boris-char {
+        .move-on-planet-red {
+            animation: move-on-planet-red 1s ease-in;
+            animation-fill-mode: forwards;
+        }
+        .move-on-planet-blu {
+            animation: move-on-planet-blu 1s ease-in;
+            animation-fill-mode: forwards;
+        }
+        #boris-flying {
+            width: 737px;
+            height: 1371px;
+            position: absolute;
+            left: 23%;
+            top: -200px;
+            z-index: 1;
+            transform: translateY(12000px) scale(0.25);
+            background-size: cover;
+            background-position: left;
+            background-repeat: no-repeat;
+            background: url("/static/img/wavingBoris_Tavola disegno 7.png");
+            animation: eye-fill 1s, flying 7s;
+            animation-timing-function: steps(28),cubic-bezier(0.86, 0.22, 0.4, 0.99);
+            animation-iteration-count: infinite, 1;
+            animation-delay: 0s, 5s;
+            animation-fill-mode: none, forwards;
+        }
+        #onair {
+            right: 0;
+            top: 16px;
+            width: 242px;
+            height: 1005px;
+            position: absolute;
+            background: url(/static/img/on-air-spento-04.png);
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+        #onair.active {
+            background: url("/static/img/on-air-acceso-04.png");
+            background-size: contain;
+            background-repeat: no-repeat;
+
+        }
+        #boris {
             width: 125px;
             height: 211px;
             position: absolute;
@@ -228,6 +305,7 @@
             margin: auto;
             left: 47%;
             top: 1.6%;
+            z-index: 1;
         }
         #boris-title {
             width: 648px;
@@ -246,7 +324,6 @@
             animation-delay: 1s;
         }
         #text-bkg {
-            font-size: 24px;
             color: white;
             width: 709px;
             height: 286px;
@@ -268,7 +345,7 @@
         }
         #text-bkg div p {
             height: inherit;
-            font-size: 22px;
+            font-size: 27px;
             text-align: left;
             overflow: hidden;
         }
@@ -449,12 +526,14 @@
             </ol>
         </div>
         <div id="focus-on-char">
-            <div id="boris-char">
+            <div id="boris-flying"></div>
+            <div id="boris">
                 <div id="focus" class="none"></div>
-                <div id="planet-blu" class="none"></div>
-                <div id="planet-red" class="none"></div>
             </div>
+            <div id="planet-blu" class="none"></div>
+            <div id="planet-red" class="none"></div>
         </div>
+        <div id="onair"></div>
         <div id="text-bkg">
             <div>
                 <p id="text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas porta nunc sit amet dui lacinia luctus ut at leo. Pellentesque ipsum neque, placerat sit amet euismod quis, consectetur et erat. Suspendisse bibendum blandit nisl et fringilla. In sapien lectus, semper vel urna nec, elementum rhoncus dolor. Morbi aliquet eros suscipit gravida venenatis. Vestibulum urna ipsum, condimentum ac ornare ut, lobortis eget nulla. Donec euismod lorem ac consectetur porta. Pellentesque pellentesque est eu orci efficitur, ac molestie enim consequat.</p>
