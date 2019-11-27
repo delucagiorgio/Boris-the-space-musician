@@ -443,7 +443,7 @@ const BEvents = () => {
                 lenPie[2] = usability.value.time + usability.value.duration;
             }
             // Update song duration
-            if (context === EVNT.CXLIKEMELODY) {
+            if (context === EVNT.CXLIKEMELODY || context === EVNT.CXLIKEMELODYLOOP) {
                 tempoLength = lenPie[0];
             } else if (context === EVNT.CXLIKECHORDS) {
                 tempoLength = lenPie[1];
@@ -893,33 +893,34 @@ const BEvents = () => {
             if (this.lastContext !== EVNT.CXRELISTENSONG) {
                 clearMelodyChroma();
                 getMelody(blobMelody, tempo, function () {
-                    addMelody();
+                    addMelody(function () {
+                        // schedule the stop
+                        self.scheduleEndPlay(self.currentContext);
+                        // Boris will congrats with you
+                        VOICES.CXPLAY.play(function () {
+                            // Boris will play your song
+                            playNote(true, true, false);
+                            // Once is finished
+                            Tone.Transport.once('stop', function () {
+                                if (_DEBUG) console.log("[music] song stopped");
+                                // Boris will ask if user want to relisten
+                                return self.call(EVNT.CXRELISTENSONG);
+                            });
+                        }, function () {
+                            // write text on screen
+                            setTimeout(function () {
+                                self.writeOnText("Bene ora che ho la melodia posso trasformarla per farla suonare con gli accordi che hai scelto.");
+                                setTimeout(function () {
+                                    self.writeOnText("Aspetta la trasformazione..");
+                                    setTimeout(function () {
+                                        self.writeOnText("Ok ci sono. Possiamo ascoltarla insieme");
+                                    }, 3000)
+                                }, 7000)
+                            }, 0)
+                        });
+                    });
                 });
             }
-            // schedule the stop
-            self.scheduleEndPlay(self.currentContext);
-            // Boris will congrats with you
-            VOICES.CXPLAY.play(function () {
-                // Boris will play your song
-                playNote(true, true, false);
-                // Once is finished
-                Tone.Transport.once('stop', function () {
-                    if (_DEBUG) console.log("[music] song stopped");
-                    // Boris will ask if user want to relisten
-                    return self.call(EVNT.CXRELISTENSONG);
-                });
-            }, function () {
-                // write text on screen
-                setTimeout(function () {
-                    self.writeOnText("Bene ora che ho la melodia posso trasformarla per farla suonare con gli accordi che hai scelto.");
-                    setTimeout(function () {
-                        self.writeOnText("Aspetta la trasformazione..");
-                        setTimeout(function () {
-                            self.writeOnText("Ok ci sono. Possiamo ascoltarla insieme");
-                        }, 3000)
-                    }, 7000)
-                }, 0)
-            });
         }
         ,
         cxLikeChords() {

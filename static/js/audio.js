@@ -164,7 +164,7 @@ clearChords = () => {
 };
 
 
-addMelody = () => {
+addMelody = (callback) => {
     let notes = [];
     let startNote = 0;
     let melodyNotesLength = melodyPart._events.length;
@@ -205,29 +205,41 @@ addMelody = () => {
                 note.velocity
             );
         }, notes).start(0);
+
+        callback();
     }
-    if (chordsPart.loopEnd !== 0 && chordsPart.loopEnd < melodyPart.loopEnd) {
+
+    let lastMelNote = melodyPart._events[melodyPart._events.length - 1].value.time + melodyPart._events[melodyPart._events.length - 1].value.duration
+    let lastChordNote = chordsPart._events[chordsPart._events.length - 1].value.time + chordsPart._events[chordsPart._events.length - 1].value.duration
+
+    if (lastChordNote !== 0 && lastChordNote < lastMelNote) {
+        let count = Math.ceil((lastMelNote / lastChordNote))
+        console.log(count, lastChordNote, lastMelNote)
         notes = [];
         // init
-        startNote = chordsPart.loopEnd;
+        startNote = lastChordNote;
         chordsPart._events.forEach(note => {
             notes.push(note.value)
         });
-        // append
-        chordsPart._events.forEach(note => {
-            let newNote = note.value;
-            newNote.time = newNote.time + startNote;
-            notes.push(newNote)
-        });
-        // add
-        chordsPart = new Tone.Part((time, note) => {
-            chordsTone.triggerAttackRelease(
-                note.name,
-                note.duration,
-                time,
-                note.velocity
-            );
-        }, notes).start(0);
+
+        //repeat until useful to cover all the melody lenght, even if it's twice longer.
+        for(let i = 0; i < count; i++) {
+            // append
+            chordsPart._events.forEach(note => {
+                let newNote = note.value;
+                newNote.time = newNote.time + startNote + 8*i;
+                notes.push(newNote)
+            });
+            // add
+            chordsPart = new Tone.Part((time, note) => {
+                chordsTone.triggerAttackRelease(
+                    note.name,
+                    note.duration,
+                    time,
+                    note.velocity
+                );
+            }, notes).start(0);
+        }
     }
     clearMelodyPartNew();
 };
