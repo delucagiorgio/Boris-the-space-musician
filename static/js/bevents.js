@@ -15,7 +15,7 @@ const EVNT = {
     CXADDMELODY: "CX_ADD_MELODY",
     CXNEWSONG: "CX_NEW_SONG",
     CXRESTART: "CX_RESTART",
-    CXEND: "CX_END",
+    CXEND: "CX_END"
 };
 
 const convertBlobToBase64 = blob => new Promise((resolve, reject) => {
@@ -493,7 +493,7 @@ const BEvents = () => {
                 case EVNT.CXLIKEMELODY:
                 case EVNT.CXLIKEMELODYLOOP:
                     this.lastContext = this.currentContext;
-                    if(this.lastContext === EVNT.CXTRYSINGLOOP) {
+                    if(this.lastContext === EVNT.CXTRYSINGLOOP || this.lastContext === EVNT.CXLIKEMELODYLOOP) {
                         this.currentContext = EVNT.CXLIKEMELODYLOOP;
                     }else{
                         this.currentContext = EVNT.CXLIKEMELODY;
@@ -892,7 +892,7 @@ const BEvents = () => {
             // if we are here chords are done
             stpChords = true;
             // commit temp part into final
-            if (lastContext !== EVNT.CXRELISTENSONG) {
+            if (this.lastContext !== EVNT.CXRELISTENSONG) {
                 clearMelodyChroma();
                 getMelody(blobMelody, tempo, function () {
                     addMelody();
