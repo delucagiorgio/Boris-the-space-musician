@@ -234,10 +234,8 @@
             animation-iteration-count: infinite;
             animation-direction: alternate-reverse;
         }
-        #focus {
+        .focus {
             position: absolute;
-            top: -2600px;
-            left: -2650px;
             width: 5420px;
             height: 5420px;
             animation: move-focus 1s ease 1;
@@ -251,9 +249,27 @@
             background: -o-radial-gradient(transparent 140px, rgba(0,0,0,0.3) 150px);
             pointer-events: none;
         }
-        #focus.active {
+        .focus.active {
             opacity: 1;
             transform: scale(1);
+        }
+        #onair div.focus {
+            top: -2658px;
+            left: -2590px;
+        }
+        #boris div.focus {
+            top: -2600px;
+            left: -2650px;
+        }
+        #list-point div.focus {
+            width: 17787px;
+            height: 5267px;
+            top: -2579px;
+            left: -8570px;
+            background: -webkit-radial-gradient(transparent 400px, rgba(0, 0, 0, 0.3) 130px);
+            background: -ms-radial-gradient(transparent 400px, rgba(0,0,0,0.3) 130px);
+            background: -o-radial-gradient(transparent 400px, rgba(0,0,0,0.3) 130px);
+            background: -moz-radial-gradient(transparent 400px, rgba(0,0,0,0.3) 130px);
         }
         .move-on-planet-red {
             animation: move-on-planet-red 1s ease-in;
@@ -267,7 +283,9 @@
             width: 737px;
             height: 1371px;
             position: absolute;
-            left: 23%;
+            left: 0;
+            right: 0;
+            margin: auto;
             top: -200px;
             z-index: 1;
             transform: translateY(12000px) scale(0.25);
@@ -523,17 +541,20 @@
                 <li><div class="checkpoint" id="check6"></div></li>
                 <li><div class="checkpoint" id="check7"></div></li>
                 <li><div class="checkpoint" id="check8"></div></li>
+                <div class="focus none"></div>
             </ol>
         </div>
         <div id="focus-on-char">
             <div id="boris-flying"></div>
             <div id="boris">
-                <div id="focus" class="none"></div>
+                <div class="focus none"></div>
             </div>
             <div id="planet-blu" class="none"></div>
             <div id="planet-red" class="none"></div>
         </div>
-        <div id="onair"></div>
+        <div id="onair">
+            <div class="focus none"></div>
+        </div>
         <div id="text-bkg">
             <div>
                 <p id="text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas porta nunc sit amet dui lacinia luctus ut at leo. Pellentesque ipsum neque, placerat sit amet euismod quis, consectetur et erat. Suspendisse bibendum blandit nisl et fringilla. In sapien lectus, semper vel urna nec, elementum rhoncus dolor. Morbi aliquet eros suscipit gravida venenatis. Vestibulum urna ipsum, condimentum ac ornare ut, lobortis eget nulla. Donec euismod lorem ac consectetur porta. Pellentesque pellentesque est eu orci efficitur, ac molestie enim consequat.</p>
