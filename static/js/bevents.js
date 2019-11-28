@@ -464,13 +464,13 @@ const BEvents = () => {
                 case EVNT.CXTRYSING:
                 case EVNT.CXTRYSINGLOOP:
                     this.lastContext = this.currentContext;
-                    this.currentContext = (this.lastContext === EVNT.CXADDMELODY) ? EVNT.CXTRYSINGLOOP : EVNT.CXTRYSING;
+                    this.currentContext = (this.lastContext === EVNT.CXADDMELODY || this.lastContext === EVNT.CXTRYSINGLOOP) ? EVNT.CXTRYSINGLOOP : EVNT.CXTRYSING;
                     this.cxTrySing();
                     break;
                 case EVNT.CXLIKEMELODY:
                 case EVNT.CXLIKEMELODYLOOP:
                     this.lastContext = this.currentContext;
-                    this.currentContext = (this.lastContext === EVNT.CXTRYSINGLOOP) ? EVNT.CXLIKEMELODYLOOP : EVNT.CXLIKEMELODY;
+                    this.currentContext = (this.lastContext === EVNT.CXTRYSINGLOOP || this.lastContext === EVNT.CXLIKEMELODYLOOP) ? EVNT.CXLIKEMELODYLOOP : EVNT.CXLIKEMELODY;
                     this.cxLikeMelody();
                     break;
                 case EVNT.CXRELISTENSONG:
@@ -607,7 +607,21 @@ const BEvents = () => {
                 // Boris will say "Hello"
                 VOICES.CXSTART.play(function () {
                         if (_DEBUG) console.log("[boris] next event to be launched");
-                        self.call(EVNT.CXLEARNTUTORIAL)
+                        let started = false;
+                        setTimeout(function () {
+                            self.listnHank(function (nextEvent) {
+                                // the response will call the next event
+                                if (!started && nextEvent === EVNT.CXTEMPO) {
+                                    started = true;
+                                    return self.call(nextEvent)
+                                }
+                            }, true);
+                            setTimeout(function () {
+                                if (!started) {
+                                    self.call(EVNT.CXLEARNTUTORIAL)
+                                }
+                            },6000);
+                        }, 2000);
                     }
                     , function () {
                         // write text on screen
@@ -844,29 +858,32 @@ const BEvents = () => {
                     addMelody(function () {
                         // schedule the stop
                         self.scheduleEndPlay(self.currentContext);
-                        // Boris will congrats with you
-                        VOICES.CXPLAY.play(function () {
-                            // Boris will play your song
-                            playNote(true, true, false);
-                            // Once is finished
-                            Tone.Transport.once('stop', function () {
-                                if (_DEBUG) console.log("[music] song stopped");
-                                // Boris will ask if user want to relisten
-                                return self.call(EVNT.CXRELISTENSONG);
-                            });
-                        }, function () {
-                            // write text on screen
-                            self.writeOnText("Bene ora che ho la melodia posso trasformarla per farla suonare con gli accordi che hai scelto.");
-                            setTimeout(function () {
-                                self.writeOnText("Aspetta la trasformazione..");
-                                setTimeout(function () {
-                                    self.writeOnText("Ok ci sono. Possiamo ascoltarla insieme");
-                                }, 3000)
-                            }, 7000)
-                        });
                     });
                 });
+            } else {
+                self.scheduleEndPlay(self.currentContext)
             }
+
+            // Boris will congrats with you
+            VOICES.CXPLAY.play(function () {
+                // Boris will play your song
+                playNote(true, true, false, tempo);
+                // Once is finished
+                Tone.Transport.once('stop', function () {
+                    if (_DEBUG) console.log("[music] song stopped");
+                    // Boris will ask if user want to relisten
+                    return self.call(EVNT.CXRELISTENSONG);
+                });
+            }, function () {
+                // write text on screen
+                self.writeOnText("Bene ora che ho la melodia posso trasformarla per farla suonare con gli accordi che hai scelto.");
+                setTimeout(function () {
+                    self.writeOnText("Aspetta la trasformazione..");
+                    setTimeout(function () {
+                        self.writeOnText("Ok ci sono. Possiamo ascoltarla insieme");
+                    }, 3000)
+                }, 7000)
+            });
         }
         ,
         cxLikeChords() {
@@ -887,7 +904,7 @@ const BEvents = () => {
                     // schedule the stop
                     self.scheduleEndPlay(self.currentContext);
                     // Boris will play the chords
-                    playNote(false, true, false);
+                    playNote(false, true, false, tempo);
                 } else {
                     Tone.Transport.stop();
                 }
@@ -935,11 +952,11 @@ const BEvents = () => {
                     blobMelody = base64;
                     // generate the melody
                     getChroma(base64, tempo, function () {
-                        if(this.currentContext === EVNT.CXTRYSING) {
+                        if (this.currentContext === EVNT.CXTRYSINGLOOP || this.currentContext === EVNT.CXLIKEMELODYLOOP) {
                             // the response will call the next event
-                            return self.call(EVNT.CXLIKEMELODY)
-                        }else{
                             return self.call(EVNT.CXLIKEMELODYLOOP)
+                        } else {
+                            return self.call(EVNT.CXLIKEMELODY)
                         }
                     });
                 }, false);
@@ -967,7 +984,7 @@ const BEvents = () => {
                     // schedule the stop
                     self.scheduleEndPlay(self.currentContext);
                     // Boris will play the melody
-                    playNote(false, false, true);
+                    playNote(false, false, true, tempo);
                 } else {
                     Tone.Transport.stop();
                 }

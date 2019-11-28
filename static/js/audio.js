@@ -214,32 +214,35 @@ addMelody = (callback) => {
 
     if (lastChordNote !== 0 && lastChordNote < lastMelNote) {
         let count = Math.ceil((lastMelNote / lastChordNote))
-        console.log(count, lastChordNote, lastMelNote)
         notes = [];
+        let temp = [];
         // init
         startNote = lastChordNote;
         chordsPart._events.forEach(note => {
             notes.push(note.value)
+            temp.push(note.value)
         });
-
+        let newNoteList = temp;
         //repeat until useful to cover all the melody lenght, even if it's twice longer.
-        for(let i = 0; i < count; i++) {
+        for(let i = 1; i < count; i++) {
+            newNoteList = temp;
+            let offset = startNote * i;
             // append
-            chordsPart._events.forEach(note => {
-                let newNote = note.value;
-                newNote.time = newNote.time + startNote + 8*i;
-                notes.push(newNote)
+            newNoteList.forEach(note => {
+                note.time = note.time + offset;
+                notes.push(note)
             });
-            // add
-            chordsPart = new Tone.Part((time, note) => {
-                chordsTone.triggerAttackRelease(
-                    note.name,
-                    note.duration,
-                    time,
-                    note.velocity
-                );
-            }, notes).start(0);
         }
+        // add
+        chordsPart = new Tone.Part((time, note) => {
+            chordsTone.triggerAttackRelease(
+                note.name,
+                note.duration,
+                time,
+                note.velocity
+            );
+        }, notes).start(0);
+
     }
     clearMelodyPartNew();
 };
