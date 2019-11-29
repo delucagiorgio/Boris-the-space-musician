@@ -10,7 +10,7 @@ let melodyPartNew = new Tone.Part();
 let melodyPart = new Tone.Part();
 let melodyTone = SampleLibrary.load({
     minify: true,
-    instruments: "trumpet"});
+    instruments: "xylophone"});
 
 getMelody =  (blob,bpm, onsuccess)  => {
     clearMelodyPartNew();
