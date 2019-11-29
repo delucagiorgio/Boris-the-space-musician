@@ -111,6 +111,12 @@ readPart = (data, synth) => {
             Tone.Transport.timeSignature = midiChords.timeSignature;
             // trigger each note
             midiChords.tracks.forEach(track => {
+                let times = []
+
+                for(let curr = 0; curr < track.notes.length; curr++){
+                    times.push([track.notes[curr].time,track.notes[curr]])
+                }
+
                 part = new Tone.Part((time, note) => {
                     synth.triggerAttackRelease(
                         note.name,
@@ -118,7 +124,7 @@ readPart = (data, synth) => {
                         time,
                         note.velocity
                     );
-                }, track.notes).start(midiChords.startTime);
+                }, times).start(0);
             });
             resolve(part);
         };
@@ -171,7 +177,7 @@ addMelody = (callback) => {
 
     if (melodyNotesLength > 0) {
         // we are append
-        startNote = melodyPart.loopEnd;
+        startNote = melodyPart._events[melodyPart._events.length - 1].value.time + melodyPart._events[melodyPart._events.length - 1].value.duration;
         // init
         melodyPart._events.forEach(note => {
             notes.push(note.value)
@@ -206,43 +212,15 @@ addMelody = (callback) => {
             );
         }, notes).start(0);
 
-        callback();
     }
 
     let lastMelNote = melodyPart._events[melodyPart._events.length - 1].value.time + melodyPart._events[melodyPart._events.length - 1].value.duration
     let lastChordNote = chordsPart._events[chordsPart._events.length - 1].value.time + chordsPart._events[chordsPart._events.length - 1].value.duration
 
     if (lastChordNote !== 0 && lastChordNote < lastMelNote) {
-        let count = Math.ceil((lastMelNote / lastChordNote))
-        notes = [];
-        let temp = [];
-        // init
-        startNote = lastChordNote;
-        chordsPart._events.forEach(note => {
-            notes.push(note.value)
-            temp.push(note.value)
-        });
-        let newNoteList = temp;
-        //repeat until useful to cover all the melody lenght, even if it's twice longer.
-        for(let i = 1; i < count; i++) {
-            newNoteList = temp;
-            let offset = startNote * i;
-            // append
-            newNoteList.forEach(note => {
-                note.time = note.time + offset;
-                notes.push(note)
-            });
-        }
-        // add
-        chordsPart = new Tone.Part((time, note) => {
-            chordsTone.triggerAttackRelease(
-                note.name,
-                note.duration,
-                time,
-                note.velocity
-            );
-        }, notes).start(0);
-
+        chordsPart.loopEnd = lastChordNote;
+        chordsPart.loop = Math.ceil((lastMelNote / lastChordNote))
     }
     clearMelodyPartNew();
+    callback();
 };

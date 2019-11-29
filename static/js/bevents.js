@@ -421,7 +421,7 @@ const BEvents = () => {
             } else {
                 tempoLength = Math.max(lenPie[1], lenPie[2]);
             }
-            tempoLength = tempoLength + 2;
+            tempoLength = tempoLength + 0.5;
             //trigger the callback when the Transport reaches the desired time
             Tone.Transport.scheduleOnce(function () {
                 if (_DEBUG) console.log("[tonejs:schedule] stop music after " + tempoLength);
@@ -618,7 +618,8 @@ const BEvents = () => {
                             }, true);
                             setTimeout(function () {
                                 if (!started) {
-                                    self.call(EVNT.CXLEARNTUTORIAL)
+                                    started = true;
+                                    return self.call(EVNT.CXLEARNTUTORIAL)
                                 }
                             },6000);
                         }, 2000);
