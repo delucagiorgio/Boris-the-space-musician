@@ -578,6 +578,16 @@ const BEvents = () => {
             boris.removeClass(moveblu);
             boris.removeClass(movered);
         },
+        showEndPage() {
+            let endPage = $("#endpage");
+            let fadein = "show-end-page";
+            endPage.addClass(fadein);
+        },
+        hideMainPage() {
+            let mainPage = $("#background");
+            let fadeout = "fade-out";
+            mainPage.addClass(fadeout);
+        },
         activeFeelings(active = true) {
             let red = $("#planet-red"), blu = $("#planet-blu");
             if (active) {
@@ -1074,6 +1084,15 @@ const BEvents = () => {
         ,
         cxRestart() {
             let self = this;
+            clearChords();
+            clearMelodyChroma();
+            clearMelodyPartNew();
+            clearMelody();
+            blobMelody = null;
+            stpMelody = false;
+            stpChords = false;
+            stpMajor = false;
+            tempo = 80;
             // log event  description
             if (_DEBUG) console.log("[boris] restart");
             // Boris will restart
@@ -1093,6 +1112,10 @@ const BEvents = () => {
                 self.writeOnText("Adesso siamo proprio arrivati alla fine, per Boris sei ufficialmente una Rockstar!");
                 setTimeout(function () {
                     self.writeOnText("A presto!");
+                    setTimeout(function () {
+                        self.showEndPage();
+                        self.hideMainPage();
+                    },3000);
                 }, 8500);
             });
         }

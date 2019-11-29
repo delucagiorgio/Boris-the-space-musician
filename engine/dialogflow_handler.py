@@ -29,12 +29,6 @@ class BorisDialogFlow:
         audio_encoding = dialogflow.enums.AudioEncoding.AUDIO_ENCODING_LINEAR_16
 
         session = session_client.session_path(self.project_id, self.session_id)
-        #print('Session path: {}\n'.format(session))
-
-        #   Convert the audio to a mono channel wav.
-        # sound = AudioSegment.from_wav(self.audio_file)
-        # sound = sound.set_channels(1)
-        # sound.export("X_" + self.audio_file, format="wav")
 
         with open( self.audio_file, 'rb') as audio_file:
             input_audio = audio_file.read()

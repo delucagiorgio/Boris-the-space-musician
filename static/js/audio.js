@@ -157,6 +157,10 @@ stopNote = () => {
     Tone.Transport.stop();
 };
 
+clearMelody = () => {
+    melodyPart = melodyPart.removeAll();
+}
+
 clearMelodyChroma = () => {
     melodyChroma = melodyChroma.removeAll();
 };

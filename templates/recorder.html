@@ -5,8 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Boris, il musicista spaziale</title>
-    <link rel="icon" href="/static/img/favicon.ico" />
-    <link rel="icon" href="/static/img/favicon.png" type="image/png" />
+    <link rel="icon" href="/static/img/favicon.ico"/>
+    <link rel="icon" href="/static/img/favicon.png" type="image/png"/>
     <link href="https://fonts.googleapis.com/css?family=PT+Mono&display=swap" rel="stylesheet">
     <!-- JQUERY IMPORT -->
     <script src="/static/js/lib/jquery-3.4.1.min.js"></script>
@@ -35,22 +35,28 @@
                 opacity: 1;
             }
         }
+
         @keyframes fade-out {
-            from {
+            0% {
                 opacity: 1;
             }
-            to {
+            50% {
+                opacity: 0.2;
+            }
+            100% {
                 opacity: 0;
             }
         }
+
         @keyframes planet-rotation {
             0% {
                 transform: rotateZ(0deg);
             }
             100% {
-                transform:  rotateZ(-360deg);
+                transform: rotateZ(-360deg);
             }
         }
+
         @keyframes system-rotation {
             0% {
                 transform: rotateZ(0deg)
@@ -59,6 +65,7 @@
                 transform: rotateZ(360deg)
             }
         }
+
         @keyframes move-background {
             from {
                 transform: translateY(calc(-11930px + 100vh));
@@ -67,6 +74,7 @@
                 transform: translateY(0);
             }
         }
+
         @keyframes move-boris {
             from {
                 transform: translateY(20px) rotateX(5deg);
@@ -75,6 +83,7 @@
                 transform: translateY(-20px) rotateX(-5deg);
             }
         }
+
         @keyframes move-on-planet-red {
             from {
             }
@@ -83,6 +92,7 @@
                 left: 74%;
             }
         }
+
         @keyframes move-on-planet-blu {
             from {
                 top: 1.1%;
@@ -93,6 +103,7 @@
                 left: 20%;
             }
         }
+
         @keyframes move-feelings-planet {
             from {
             }
@@ -100,6 +111,7 @@
                 transform: translateY(-10px) rotateY(-15deg);
             }
         }
+
         @keyframes move-stars {
             from {
                 transform: translateX(-560px);
@@ -108,6 +120,7 @@
                 transform: translateX(560px);
             }
         }
+
         @keyframes eye-fill {
             from {
                 background-position: left;
@@ -116,6 +129,7 @@
                 background-position: right;
             }
         }
+
         @keyframes flying {
             from {
                 transform: translateY(12000px) scale(0.25);
@@ -124,14 +138,17 @@
                 transform: translateY(-760px) scale(0.25);
             }
         }
+
         html {
             overflow: hidden;
         }
+
         body {
             font-family: 'PT Mono', monospace;
             font-size: 14pt;
             margin: 0;
         }
+
         #controls {
             display: flex;
             flex-direction: row;
@@ -140,15 +157,28 @@
             height: 20%;
             width: 100%;
         }
-        #record { height: 15vh; }
-        #save, #save img { height: 10vh; }
-        #save { opacity: 0.25;}
-        #save[download] { opacity: 1;}
+
+        #record {
+            height: 15vh;
+        }
+
+        #save, #save img {
+            height: 10vh;
+        }
+
+        #save {
+            opacity: 0.25;
+        }
+
+        #save[download] {
+            opacity: 1;
+        }
+
         #solar-system {
             right: 40%;
             width: 1840px;
             top: 150vh;
-            animation: system-rotation 30s;
+            animation: system-rotation 60s;
             animation-iteration-count: 5;
             animation-timing-function: linear;
             animation-direction: normal;
@@ -156,11 +186,13 @@
             z-index: -1;
             position: absolute;
         }
+
         .planet {
             position: relative;
             left: 0;
             top: 0;
         }
+
         #planet-blu {
             left: 17%;
             top: 1.6%;
@@ -173,6 +205,7 @@
             transition: all 1s ease-in;
             transform: translateX(-100vh);
         }
+
         #planet-red {
             right: 12%;
             top: 1.6%;
@@ -185,6 +218,7 @@
             transition: all 1s ease-in;
             transform: translateX(100vh);
         }
+
         #planet-blu.active {
             animation: move-feelings-planet 2s;
             animation-iteration-count: infinite;
@@ -192,6 +226,7 @@
             animation-direction: alternate-reverse;
             transform: translateX(0);
         }
+
         #planet-red.active {
             animation: move-feelings-planet 2s;
             animation-iteration-count: infinite;
@@ -199,32 +234,39 @@
             animation-direction: alternate-reverse;
             transform: translateX(0);
         }
+
         #planet-red.active.zoom, #planet-blu.active.zoom {
             animation: none;
             transform: translateX(0) scale(1.5);
         }
+
         #planet-1 {
             margin-bottom: 40vh;
             margin-right: -5vh;
-            animation: planet-rotation 30s;
+            animation: planet-rotation 60s;
             animation-iteration-count: infinite;
             animation-timing-function: linear;
             animation-direction: normal;
+            width: 100px;
         }
+
         #planet-2 {
             margin-bottom: 50vh;
-            animation: planet-rotation 30s;
+            animation: planet-rotation 60s;
             animation-iteration-count: infinite;
             animation-timing-function: linear;
             animation-direction: normal;
+            width: 200px;
         }
+
         #planet-3 {
             margin-bottom: 25vh;
-            animation: planet-rotation 30s;
+            animation: planet-rotation 60s;
             animation-iteration-count: infinite;
             animation-timing-function: linear;
             animation-direction: normal;
         }
+
         #focus-on-char {
             position: absolute;
             width: 100%;
@@ -234,6 +276,7 @@
             animation-iteration-count: infinite;
             animation-direction: alternate-reverse;
         }
+
         .focus {
             position: absolute;
             width: 5420px;
@@ -243,42 +286,54 @@
             transition: all 1s ease-in;
             transform: scale(8.5);
             opacity: 0;
-            background: -moz-radial-gradient(transparent 140px, rgba(0,0,0,0.3) 150px);
+            background: -moz-radial-gradient(transparent 140px, rgba(0, 0, 0, 0.3) 150px);
             background: -webkit-radial-gradient(transparent 140px, rgba(0, 0, 0, 0.3) 150px);
-            background: -ms-radial-gradient(transparent 140px, rgba(0,0,0,0.3) 150px);
-            background: -o-radial-gradient(transparent 140px, rgba(0,0,0,0.3) 150px);
+            background: -ms-radial-gradient(transparent 140px, rgba(0, 0, 0, 0.3) 150px);
+            background: -o-radial-gradient(transparent 140px, rgba(0, 0, 0, 0.3) 150px);
             pointer-events: none;
         }
+
         .focus.active {
             opacity: 1;
             transform: scale(1);
         }
+
         #onair div.focus {
             top: -2658px;
             left: -2590px;
         }
+
         #boris div.focus {
             top: -2600px;
             left: -2650px;
         }
+
         #list-point div.focus {
             width: 17787px;
             height: 5267px;
             top: -2579px;
             left: -8570px;
             background: -webkit-radial-gradient(transparent 400px, rgba(0, 0, 0, 0.3) 130px);
-            background: -ms-radial-gradient(transparent 400px, rgba(0,0,0,0.3) 130px);
-            background: -o-radial-gradient(transparent 400px, rgba(0,0,0,0.3) 130px);
-            background: -moz-radial-gradient(transparent 400px, rgba(0,0,0,0.3) 130px);
+            background: -ms-radial-gradient(transparent 400px, rgba(0, 0, 0, 0.3) 130px);
+            background: -o-radial-gradient(transparent 400px, rgba(0, 0, 0, 0.3) 130px);
+            background: -moz-radial-gradient(transparent 400px, rgba(0, 0, 0, 0.3) 130px);
         }
+
         .move-on-planet-red {
             animation: move-on-planet-red 1s ease-in;
             animation-fill-mode: forwards;
         }
+
         .move-on-planet-blu {
             animation: move-on-planet-blu 1s ease-in;
             animation-fill-mode: forwards;
         }
+
+        .show-end-page {
+            animation: fade-in 2s ease-in;
+            animation-fill-mode: forwards;
+        }
+
         #boris-flying {
             width: 737px;
             height: 1371px;
@@ -294,11 +349,12 @@
             background-repeat: no-repeat;
             background: url("/static/img/wavingBoris_Tavola disegno 7.png");
             animation: eye-fill 1s, flying 7s;
-            animation-timing-function: steps(28),cubic-bezier(0.86, 0.22, 0.4, 0.99);
+            animation-timing-function: steps(28), cubic-bezier(0.86, 0.22, 0.4, 0.99);
             animation-iteration-count: infinite, 1;
             animation-delay: 0s, 5s;
             animation-fill-mode: none, forwards;
         }
+
         #onair {
             right: 0;
             top: 16px;
@@ -309,12 +365,14 @@
             background-size: contain;
             background-repeat: no-repeat;
         }
+
         #onair.active {
             background: url("/static/img/on-air-acceso-04.png");
             background-size: contain;
             background-repeat: no-repeat;
 
         }
+
         #boris {
             width: 125px;
             height: 211px;
@@ -325,13 +383,14 @@
             top: 1.6%;
             z-index: 1;
         }
+
         #boris-title {
             width: 648px;
             height: 132px;
             position: absolute;
             background: url(/static/img/logo.png);
             margin: auto;
-            right:0;
+            right: 0;
             left: 0;
             bottom: 44vh;
             background-size: contain;
@@ -341,6 +400,7 @@
             animation-fill-mode: forwards;
             animation-delay: 1s;
         }
+
         #text-bkg {
             color: white;
             width: 709px;
@@ -354,6 +414,7 @@
             background-size: contain;
             background-repeat: no-repeat;
         }
+
         #text-bkg > div {
             position: relative;
             margin-top: 48px;
@@ -361,19 +422,22 @@
             height: 180px;
             width: 636px;
         }
+
         #text-bkg div p {
             height: inherit;
             font-size: 27px;
             text-align: left;
             overflow: hidden;
         }
+
         #content-bkg {
             height: 11930px;
             text-align: center;
             color: #000;
-            position:relative;
+            position: relative;
         }
-        #stars{
+
+        #stars {
             position: absolute;
             left: -2000px;
             top: 0;
@@ -390,6 +454,7 @@
             animation-iteration-count: infinite;
             animation-direction: alternate-reverse;
         }
+
         #background{
             position: absolute;
             left: 0;
@@ -397,7 +462,7 @@
             top: 0;
             bottom: 0;
             z-index: -1;
-            background: url("/static/img/sfondo-05.png");
+            background: url("/static/img/sfondo.png");
             background-position: top;
             opacity: 0;
             transform: translateY(calc(-11930px + 100vh));
@@ -408,25 +473,39 @@
             animation-iteration-count: 1, 1;
             animation-delay: 6s, 0s;
         }
+
+        #endpage {
+            background-repeat: no-repeat;
+            background-size: contain;
+            height: 100%;
+            background-image: url("/static/img/fine-03.png");
+            opacity: 0.0;
+            width: 100%;
+        }
+
         #check-list {
             position: absolute;
             top: 50px;
             left: 50px;
         }
+
         #list-point {
             display: inline-flex;
             list-style: none;
             position: absolute;
             top: 30px;
         }
+
         .checkpoint {
         }
+
         ol#list-point > li {
             position: relative;
             height: 40px;
             width: 40px;
             margin: 26px;
         }
+
         ol#list-point > li::before {
             content: "";
             width: 30px;
@@ -436,81 +515,99 @@
             bottom: 50%;
             left: -40px;
         }
+
         ol#list-point > li div {
             width: inherit;
             height: inherit;
         }
+
         #check1 {
             background: url("/static/img/icone/Risorsa 10.png");
             background-size: contain;
         }
+
         #check1.active {
             background: url("/static/img/icone/Risorsa 18.png");
             background-size: contain;
 
         }
+
         #check2 {
             background: url("/static/img/icone/Risorsa 11.png");
             background-size: contain;
         }
+
         #check2.active {
             background: url("/static/img/icone/Risorsa 19.png");
             background-size: contain;
 
         }
+
         #check3 {
             background: url("/static/img/icone/Risorsa 12.png");
             background-size: contain;
         }
+
         #check3.active {
             background: url("/static/img/icone/Risorsa 20.png");
             background-size: contain;
 
         }
+
         #check5 {
             background: url("/static/img/icone/Risorsa 13.png");
             background-size: contain;
         }
+
         #check5.active {
             background: url("/static/img/icone/Risorsa 21.png");
             background-size: contain;
 
         }
+
         #check4 {
             background: url("/static/img/icone/Risorsa 14.png");
             background-size: contain;
         }
+
         #check4.active {
             background: url("/static/img/icone/Risorsa 22.png");
             background-size: contain;
 
         }
+
         #check6 {
             background: url("/static/img/icone/Risorsa 15.png");
             background-size: contain;
         }
+
         #check6.active {
             background: url("/static/img/icone/Risorsa 23.png");
             background-size: contain;
 
         }
+
         #check7 {
             background: url("/static/img/icone/Risorsa 16.png");
             background-size: contain;
         }
+
         #check7.active {
             background: url("/static/img/icone/Risorsa 24.png");
             background-size: contain;
 
         }
+
         #check8 {
             background: url("/static/img/icone/Risorsa 17.png");
             background-size: contain;
         }
+
         #check8.active {
             background: url("/static/img/icone/Risorsa 25.png");
             background-size: contain;
         }
+
         #botis-title-vertical {
             width: 120px;
             height: 307px;
@@ -518,12 +615,21 @@
             background-size: contain;
             background-repeat: no-repeat;
         }
+
         #text-bkg {
             transition: all 1s ease;
         }
+
         @media (orientation: landscape) {
-            body { flex-direction: row;}
-            #controls { flex-direction: column; height: 100%; width: 10%;}
+            body {
+                flex-direction: row;
+            }
+
+            #controls {
+                flex-direction: column;
+                height: 100%;
+                width: 10%;
+            }
         }
     </style>
 </head>
@@ -557,29 +663,18 @@
         </div>
         <div id="text-bkg">
             <div>
-                <p id="text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas porta nunc sit amet dui lacinia luctus ut at leo. Pellentesque ipsum neque, placerat sit amet euismod quis, consectetur et erat. Suspendisse bibendum blandit nisl et fringilla. In sapien lectus, semper vel urna nec, elementum rhoncus dolor. Morbi aliquet eros suscipit gravida venenatis. Vestibulum urna ipsum, condimentum ac ornare ut, lobortis eget nulla. Donec euismod lorem ac consectetur porta. Pellentesque pellentesque est eu orci efficitur, ac molestie enim consequat.</p>
+                <p id="text"></p>
             </div>
         </div>
         <div id="boris-title"></div>
         <div id="solar-system">
-            <img class="planet" id="planet-1" src="/static/img/Pianeta-blu.png" alt="pianeta"/>
-            <img class="planet" id="planet-2" src="/static/img/pianeta-arancio.png" alt="pianeta"/>
+            <img class="planet" id="planet-1" src="/static/img/pianeta-blu-04.png" alt="pianeta"/>
+            <img class="planet" id="planet-2" src="/static/img/pianetaDischi-04.png" alt="pianeta"/>
             <img class="planet" id="planet-3" src="/static/img/pianeta-marrone.png" alt="pianeta"/>
         </div>
+        <div id="endpage"/>
     </div>
 
-
-</div>
-
-<div id="controls">
-    <p id="record" onclick="toggleRecording(this);">Record</p>
-    <p id="play" onclick="playNote();">Play</p>
-    <p id="stop" onclick="stopNote();">Stop</p>
-    <p id="chords" onclick="getChords(true);">New Chords</p>
-    <p id="append" onclick="addMelody();">Append</p>
-    <p id="clear" onclick="clearMelody(this);">Clear</p>
-    <i>{{midi}}</i>
-    <a id="save" href="#"><p>Save</p></a>
 </div>
 
 <div id="btn1"></div>
