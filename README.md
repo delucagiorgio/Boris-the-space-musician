@@ -59,7 +59,7 @@ From the terminal, execute these lines in order to provide Flask the right infor
 
 $ export FLASK_APP=flask_app.py
 
-Note: if the structure of the enviroment and the downloaded repository are unchanged, the above line is the correct command to be used from the terminal (executing it from the root of the project)
+Note: if the structure of the enviroment and the downloaded repository are unchanged, the above line is the correct command to be used from the terminal
 
 Start of the application
 ------------------------
