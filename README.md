@@ -1,6 +1,6 @@
 BORIS, the space musician
 -------------------------
-    A project by Bombaci Nicola, Colombo Erica, De Luca Giorgio for Advanced User Interface project
+## A project by Bombaci Nicola, Colombo Erica, De Luca Giorgio for Advanced User Interface project
 
 The web app's aim is to provide an experience to the user, who can create a simple melody with his/her voice.
 
