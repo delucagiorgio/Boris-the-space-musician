@@ -24,7 +24,7 @@ To use Boris you must first clone or download the repository.
 Follow the following instruction according to your operative system.
 https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html#regular-installation
 
-Set the directory of the environment on the Boris project location.
+Set the root of the environment on the Boris project location.
 
 After the installation be sure to activate your new virtual enviroment before starting: when you will do that, go on the next steps.
 
